@@ -1,0 +1,12 @@
+[package]
+name = "_rust_scatac_fragment_tools"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "_rust_scatac_fragment_tools"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.19.0"

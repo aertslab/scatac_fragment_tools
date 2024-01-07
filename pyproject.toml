@@ -1,0 +1,34 @@
+[build-system]
+requires = ["maturin>=1.4,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "scatac_fragment_tools"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dynamic = ["version"]
+dependencies = [
+    "numpy",
+    "pyBigWig",
+    "polars",
+    "pyarrow",
+    "numba",
+    "rich-argparse"
+]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+module-name = "scatac_fragment_tools._rust_scatac_fragment_tools"
+
+[project.optional-dependencies]
+development = [
+    "mypy"
+]
+
+[project.scripts]
+scatac_fragment_tools = "scatac_fragment_tools.cli.main:main"
+
