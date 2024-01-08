@@ -1,9 +1,11 @@
-import scatac_fragment_tools
-from scatac_fragment_tools.cli.commands import command_fragment_to_bigwigs
 import argparse
-from rich_argparse import RichHelpFormatter
 import sys
 from typing import Dict
+
+from rich_argparse import RichHelpFormatter
+
+import scatac_fragment_tools
+from scatac_fragment_tools.cli.commands import command_fragment_to_bigwigs
 
 # Constants
 _VERSION = scatac_fragment_tools.__version__
@@ -97,11 +99,12 @@ def main() -> int:
     _commands = {}
     for parser_creator_func in _PARSERS_CREATOR_FUNCS:
         _commands.update(parser_creator_func(subparsers))
-    # When program is called without subcommand, print main help message
+    # When program is called without subcommand, print main help message.
     if len(sys.argv) == 1:
         main_parser.print_help()
-    # When program is called with a subcommand, but no other arguments, print subcommand help message
-    # If the subcommand is not recognized, print main help message
+    # When program is called with a subcommand, but no other arguments, print
+    # subcommand's help message. When the subcommand is not recognized, print
+    # main help message.
     elif len(sys.argv) == 2:
         called_command = sys.argv[1]
         if called_command in _commands:
@@ -111,7 +114,7 @@ def main() -> int:
                 f"\033[1;31mUnrecognized command:\033[0m \033[1m{called_command}\033[0m"
             )
             main_parser.print_help()
-    # When program is called with a subcommand and other arguments, parse arguments
+    # When program is called with a subcommand and other arguments, parse arguments.
     else:
         args = main_parser.parse_args()
         if hasattr(args, "func"):

@@ -8,13 +8,15 @@ def command_fragment_to_bigwigs(args):
         )
     if not os.path.exists(args.fragments_filename):
         raise FileNotFoundError(f"Fragments file not found: {args.fragments_filename}")
+
     # import inside function to avoid unnecessary imports when calling other commands.
+    import polars as pl
+
     from scatac_fragment_tools.library.bigwig.fragments_to_bigwig import (
         fragments_to_bw,
-        read_fragments_to_polars_df,
         get_chromosome_sizes,
+        read_fragments_to_polars_df,
     )
-    import polars as pl
 
     chrom_sizes = get_chromosome_sizes(args.chrom_sizes_filename)
     fragments_df = read_fragments_to_polars_df(args.fragments_filename)

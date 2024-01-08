@@ -1,13 +1,13 @@
-import numpy as np
-import pyBigWig
-import polars as pl
-import os
 import gzip
-import pyarrow as pa
-import numba
-
-from typing import Literal
+import os
 from pathlib import Path
+from typing import Literal
+
+import numba
+import numpy as np
+import polars as pl
+import pyarrow as pa
+import pyBigWig
 
 
 def get_chromosome_sizes(chrom_sizes_filename: str):
@@ -28,10 +28,7 @@ def get_chromosome_sizes(chrom_sizes_filename: str):
 
 
 def normalise_filepath(path: str | Path, check_not_directory: bool = True) -> str:
-    """
-    Create a string path, expanding the home directory if present.
-
-    """
+    """Create a string path, expanding the home directory if present."""
     path = os.path.expanduser(path)
     if check_not_directory and os.path.exists(path) and os.path.isdir(path):
         raise IsADirectoryError(f"Expected a file path; {path!r} is a directory")
@@ -309,12 +306,13 @@ def fragments_to_bw(
     bw_filename: str,
     normalize: bool = True,
     scaling_factor: float = 1.0,
+    cut_sites: bool = False,
 ):
     chrom_arrays = {}
 
     with pyBigWig.open(bw_filename, "wb") as bw:
         print("Add chromosome sizes to bigWig header")
-        bw.addHeader([(chrom, chrom_size) for chrom, chrom_size in chrom_sizes.items()])
+        bw.addHeader(list(chrom_sizes.items()))
 
         for chrom, chrom_size in chrom_sizes.items():
             chrom_arrays[chrom] = np.zeros(chrom_size, dtype=np.uint32)
@@ -343,7 +341,7 @@ def fragments_to_bw(
         print(
             "Compact depth array per chromosome (make ranges for consecutive the same values and remove zeros):"
         )
-        for chrom, chrom_size in chrom_sizes.items():
+        for chrom in chrom_sizes:
             print(f"  - Compact {chrom} ...")
             idx, values, lengths = collapse_consecutive_values(chrom_arrays[chrom])
             non_zero_idx = np.flatnonzero(values)
@@ -352,8 +350,8 @@ def fragments_to_bw(
                 # Skip chromosomes with no depth > 0.
                 continue
 
-            # Select only consecutive different values and calculate start and end coordinates
-            # (in BED format) for each of those ranges.
+            # Select only consecutive different values and calculate start and end
+            # coordinates (in BED format) for each of those ranges.
             chroms = np.repeat(chrom, len(non_zero_idx))
             starts = idx[non_zero_idx]
             ends = idx[non_zero_idx] + lengths[non_zero_idx]
