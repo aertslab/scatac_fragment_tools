@@ -1,2 +1,3 @@
 from scatac_fragment_tools import _rust_scatac_fragment_tools
+
 __version__ = _rust_scatac_fragment_tools.__version__

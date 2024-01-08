@@ -1,7 +1,5 @@
 import scatac_fragment_tools
-from scatac_fragment_tools.cli.commands import (
-    command_fragment_to_bigwigs
-)
+from scatac_fragment_tools.cli.commands import command_fragment_to_bigwigs
 import argparse
 from rich_argparse import RichHelpFormatter
 import sys
@@ -10,13 +8,16 @@ from typing import Dict
 # Constants
 _VERSION = scatac_fragment_tools.__version__
 
-def add_fragments_to_bigwig_subparser(subparsers: argparse._SubParsersAction) -> Dict[str, argparse.ArgumentParser]:
+
+def add_fragments_to_bigwig_subparser(
+    subparsers: argparse._SubParsersAction,
+) -> Dict[str, argparse.ArgumentParser]:
     _NAME = "bigwig"
     parser = subparsers.add_parser(
-        name = _NAME,
-        add_help = True,
+        name=_NAME,
+        add_help=True,
         description="Calculate genome coverage for fragments and write result to bigWig file.",
-        formatter_class=RichHelpFormatter
+        formatter_class=RichHelpFormatter,
     )
     parser.set_defaults(func=command_fragment_to_bigwigs)
     required_arguments = parser.add_argument_group("Required arguments")
@@ -75,18 +76,20 @@ def add_fragments_to_bigwig_subparser(subparsers: argparse._SubParsersAction) ->
         action="store",
         type=str,
         required=False,
-        help='Add chromosome prefix to each chromosome name found in the fragments file.',
+        help="Add chromosome prefix to each chromosome name found in the fragments file.",
     )
     return {_NAME: parser}
 
+
 _PARSERS_CREATOR_FUNCS = [
-    add_fragments_to_bigwig_subparser
+    add_fragments_to_bigwig_subparser,
 ]
+
 
 def main() -> int:
     main_parser = argparse.ArgumentParser(
         description=f"scATAC-fragment-tools (v{_VERSION}): Tools for processing scATAC-seq fragments.",
-        formatter_class=RichHelpFormatter
+        formatter_class=RichHelpFormatter,
     )
     subparsers = main_parser.add_subparsers(
         title="subcommands",
@@ -104,7 +107,9 @@ def main() -> int:
         if called_command in _commands:
             _commands[called_command].print_help()
         else:
-            print(f"\033[1;31mUnrecognized command:\033[0m \033[1m{called_command}\033[0m")
+            print(
+                f"\033[1;31mUnrecognized command:\033[0m \033[1m{called_command}\033[0m"
+            )
             main_parser.print_help()
     # When program is called with a subcommand and other arguments, parse arguments
     else:
@@ -113,6 +118,6 @@ def main() -> int:
             args.func(args)
     return 0
 
-if __name__ == "__main__":
-   sys.exit(main())
 
+if __name__ == "__main__":
+    sys.exit(main())
