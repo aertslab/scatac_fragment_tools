@@ -7,13 +7,14 @@ import numba
 import numpy as np
 import polars as pl
 import pyarrow as pa
+import pyarrow.csv
 import pyBigWig
 
 
 def get_chromosome_sizes(chrom_sizes_filename: str):
     chrom_sizes = {}
 
-    with open(chrom_sizes_filename, "r") as fh:
+    with open(chrom_sizes_filename, "r") as fh:  # noqa: UP015
         for line in fh:
             line = line.rstrip("\n")
 
@@ -332,6 +333,12 @@ def fragments_to_bw(
             starts, ends = (
                 per_chrom_fragments_dfs[chrom].select(["Start", "End"]).to_numpy().T
             )
+            if cut_sites:
+                # Create cut site positions (for both start and end of a fragment).
+                starts, ends = (
+                    np.hstack((starts, ends - 1)),
+                    np.hstack((starts + 1, ends)),
+                )
             chrom_arrays[chrom] = calculate_depth(chrom_sizes[chrom], starts, ends)
             no_fragments += per_chrom_fragments_dfs[chrom].height
 

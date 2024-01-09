@@ -55,12 +55,11 @@ def add_fragments_to_bigwig_subparser(
         "-n",
         "--normalize",
         dest="normalize",
-        action="store",
-        type=str,
+        action="store_true",
         required=False,
-        choices={"yes", "no"},
-        default="yes",
-        help='Normalize genome coverage data. Default: "yes".',
+        default=False,
+        help="Normalize genome coverage data by dividing by sequencing depth "
+        "(number of fragments) multiplied by 1 million.",
     )
     optional_arguments.add_argument(
         "-s",
@@ -70,7 +69,18 @@ def add_fragments_to_bigwig_subparser(
         type=float,
         required=False,
         default=1.0,
-        help='Scaling factor for genome coverage data. Default: "1.0".',
+        help="Scaling factor for genome coverage data. "
+        'If normalization is enabled, scaling is applied afterwards. Default: "1.0".',
+    )
+    optional_arguments.add_argument(
+        "-x",
+        "--cut-sites",
+        dest="cut_sites",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Use 1 bp Tn5 cut sites (start and end of each fragment) instead of whole "
+        "fragment length for coverage calculation.",
     )
     optional_arguments.add_argument(
         "--chrom-prefix",

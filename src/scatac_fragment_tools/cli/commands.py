@@ -32,6 +32,7 @@ def command_fragment_to_bigwigs(args):
         fragments_df,
         chrom_sizes,
         args.bigwig_filename,
-        args.normalize == "yes",
+        args.normalize,
         args.scaling_factor,
+        args.cut_sites,
     )
