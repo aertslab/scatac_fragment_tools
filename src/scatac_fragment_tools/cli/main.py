@@ -114,11 +114,13 @@ def main() -> int:
         main_parser.print_help()
     # When program is called with a subcommand, but no other arguments, print
     # subcommand's help message. When the subcommand is not recognized, print
-    # main help message.
+    # main help message, unless the subcommand is "--help", in which case print.
     elif len(sys.argv) == 2:
         called_command = sys.argv[1]
         if called_command in _commands:
             _commands[called_command].print_help()
+        elif called_command == "--help":
+            main_parser.print_help()
         else:
             print(
                 f"\033[1;31mUnrecognized command:\033[0m \033[1m{called_command}\033[0m"
