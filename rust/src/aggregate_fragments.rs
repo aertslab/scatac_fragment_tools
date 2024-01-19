@@ -132,7 +132,7 @@ impl Ord for Fragment {
 /// * `verbose` - Whether to print progress messages.
 
 pub fn merge_fragment_files(
-    path_to_fragment_files: &Vec<String>,
+    path_to_fragment_files: &[String],
     path_to_output_file: &String,
     number_of_threads: u32,
     verbose: bool,
