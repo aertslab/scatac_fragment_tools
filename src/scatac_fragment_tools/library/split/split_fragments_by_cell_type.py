@@ -88,8 +88,8 @@ def split_fragment_files_by_cell_type(
             path_to_fragment_file = os.path.join(path_to_temp_folder, sample, f"{cell_type_sanitized}.fragments.tsv.gz")
             if not os.path.exists(path_to_fragment_file):
                 raise ValueError(f"Fragment file {path_to_fragment_file} does not exist.")
-            if cell_type not in cell_type_to_fragment_files:
-                cell_type_to_fragment_files[cell_type] = []
+            if cell_type_sanitized not in cell_type_to_fragment_files:
+                cell_type_to_fragment_files[cell_type_sanitized] = []
             cell_type_to_fragment_files[cell_type_sanitized].append(path_to_fragment_file)
 
     # Merge fragment files by cell type, in parallel
