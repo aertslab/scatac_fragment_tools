@@ -60,7 +60,7 @@ impl Fragment {
     /// assert_eq!(fragment.score, Some(10));
     /// ```
     fn new_from_string(s: &str) -> Fragment {
-        let fields: Vec<&str> = s.split("\t").collect();
+        let fields: Vec<&str> = s.split('\t').collect();
         match fields.len() {
             4 => Fragment {
                 chrom: fields[0].to_string(),
@@ -161,7 +161,7 @@ pub fn merge_fragment_files(
 
     // split buffer and remove empty lines
     let mut fragments: Vec<Fragment> = buffer
-        .split("\n")
+        .split('\n')
         .filter(|s| !s.is_empty())
         .map(|s| Fragment::new_from_string(s))
         .collect();

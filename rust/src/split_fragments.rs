@@ -64,7 +64,7 @@ impl LazyBgzfWriter<'_> {
 }
 
 fn sanitize_string_for_filename(s: String) -> String {
-    s.replace(" ", "_").replace("/", "_")
+    s.replace([' ', '/'], "_")
 }
 
 /// Splits a tabix-index fragment file into multiple files based on cell type.
