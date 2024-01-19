@@ -1,6 +1,7 @@
 use bgzip::BGZFReader;
 use rust_htslib::bgzf::Writer;
 use rust_htslib::tpool::ThreadPool;
+use core::fmt;
 use std::fs::File;
 /// Aggregates multiple fragment files into a single file
 /// This code is just a fancy implementation of the unix command `cat | sort -k1,1 -k2,2n -k3,3n | bgzip`
@@ -79,27 +80,6 @@ impl Fragment {
             _ => panic!("Invalid number of fields in fragment file!"),
         }
     }
-
-    /// Convert a Fragment to a string.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// let fragment = Fragment::new_from_string("chr1\t100\t200\tAACATCGATGGATG-1\t10");
-    /// assert_eq!(fragment.to_string(), "chr1\t100\t200\tAACATCGATGGATG-1\t10");
-    /// ```
-    fn to_string(&self) -> String {
-        match self.score {
-            Some(score) => format!(
-                "{}\t{}\t{}\t{}\t{}",
-                self.chrom, self.start, self.end, self.cell_barcode, score
-            ),
-            None => format!(
-                "{}\t{}\t{}\t{}",
-                self.chrom, self.start, self.end, self.cell_barcode
-            ),
-        }
-    }
 }
 
 impl Ord for Fragment {
@@ -131,6 +111,23 @@ impl Ord for Fragment {
 impl PartialOrd for Fragment {
     fn partial_cmp(&self, other: &Fragment) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
+    }
+}
+
+impl fmt::Display for Fragment {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.score {
+            Some(score) => write!(
+                f,
+                "{}\t{}\t{}\t{}\t{}",
+                self.chrom, self.start, self.end, self.cell_barcode, score
+            ),
+            None => write!(
+                f,
+                "{}\t{}\t{}\t{}",
+                self.chrom, self.start, self.end, self.cell_barcode
+            ),
+        }
     }
 }
 
