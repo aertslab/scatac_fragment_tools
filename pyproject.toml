@@ -17,7 +17,8 @@ dependencies = [
     "polars",
     "pyarrow",
     "numba",
-    "rich-argparse"
+    "rich-argparse",
+    "joblib"
 ]
 
 [tool.maturin]
@@ -29,6 +30,7 @@ development = [
     "mypy",
     "black",
     "ruff",
+    "pytest",
 ]
 
 [project.scripts]
@@ -90,3 +92,10 @@ max-doc-length = 88
 
 [tool.ruff.flake8-tidy-imports]
 ban-relative-imports = "all"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = [
+    "tests",
+]
+addopts = "--verbose"
