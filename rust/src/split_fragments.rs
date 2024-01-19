@@ -35,11 +35,11 @@ impl LazyBgzfWriter<'_> {
     /// * `path` - The path to the file.
     /// * `tpool` - The thread pool to use for writing.
 
-    fn new<'a>(path: String, tpool: &'a ThreadPool) -> LazyBgzfWriter {
+    fn new(path: String, tpool: &ThreadPool) -> LazyBgzfWriter {
         LazyBgzfWriter {
             writer: None,
-            path: path,
-            tpool: tpool,
+            path,
+            tpool,
             written: false,
         }
     }
@@ -118,7 +118,7 @@ pub fn split_fragments_by_cell_barcode(
     let contigs_in_fragments_file = tbx_reader.seqnames();
 
     for contig in chromsizes.keys().sorted() {
-        if !contigs_in_fragments_file.contains(&contig) {
+        if !contigs_in_fragments_file.contains(contig) {
             log(
                 &format!(
                     "Skipping contig {} because it is not in the fragments file",

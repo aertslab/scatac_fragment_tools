@@ -114,7 +114,7 @@ impl Ord for Fragment {
         let other_end = &other.end;
 
         if self_chrom != other_chrom {
-            return self_chrom.cmp(other_chrom);
+            self_chrom.cmp(other_chrom)
         } else if self_start != other_start {
             return self_start.cmp(other_start);
         } else {
@@ -163,7 +163,7 @@ pub fn merge_fragment_files(
     let mut fragments: Vec<Fragment> = buffer
         .split('\n')
         .filter(|s| !s.is_empty())
-        .map(|s| Fragment::new_from_string(s))
+        .map(Fragment::new_from_string)
         .collect();
 
     // sort fragments
