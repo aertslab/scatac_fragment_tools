@@ -33,7 +33,7 @@ fn read_fragments_file(file_name: &String, buffer: &mut String) {
 /// * `cell_barcode` - Cell barcode.
 /// * `score` - Optional score.
 
-#[derive(PartialEq, Eq, PartialOrd)]
+#[derive(PartialEq, Eq)]
 struct Fragment {
     chrom: String,
     start: usize,
@@ -113,13 +113,24 @@ impl Ord for Fragment {
         let self_end = &self.end;
         let other_end = &other.end;
 
+        let self_cell_barcode = &self.cell_barcode;
+        let other_cell_barcode = &other.cell_barcode;
+
         if self_chrom != other_chrom {
             self_chrom.cmp(other_chrom)
         } else if self_start != other_start {
             return self_start.cmp(other_start);
-        } else {
+        } else if self_end != other_end {
             return self_end.cmp(other_end);
+        } else {
+            return self_cell_barcode.cmp(other_cell_barcode);
         }
+    }
+}
+
+impl PartialOrd for Fragment {
+    fn partial_cmp(&self, other: &Fragment) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 
