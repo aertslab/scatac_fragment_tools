@@ -1,23 +1,22 @@
-/// Splits a tabix-index fragment file into multiple files based on cell type.
-
-use std::io::Write;
-use std::collections::HashMap;
-use rust_htslib::bgzf::Writer;
-use rust_htslib::tpool::ThreadPool;
-use rust_htslib::tbx::{self, Read as TbxRead};
 use itertools::Itertools;
+use rust_htslib::bgzf::Writer;
+use rust_htslib::tbx::{self, Read as TbxRead};
+use rust_htslib::tpool::ThreadPool;
+use std::collections::HashMap;
+/// Splits a tabix-index fragment file into multiple files based on cell type.
+use std::io::Write;
 
 /// A lazy BGZF writer that only opens the file when the first write is called.
-/// 
+///
 /// # Fields
-/// 
+///
 /// * `writer` - The BGZF writer.
 /// * `path` - The path to the file.
 /// * `tpool` - The thread pool to use for writing.
 /// * `written` - Whether the file has been written to yet.
-/// 
+///
 /// # Methods
-/// 
+///
 /// * `new` - Creates a new LazyBgzfWriter.
 /// * `write` - Opens the file, if it has not been opened yet, and writes the given bytes to it.
 
@@ -25,38 +24,38 @@ struct LazyBgzfWriter<'a> {
     writer: Option<Writer>,
     path: String,
     tpool: &'a ThreadPool,
-    written: bool
+    written: bool,
 }
 
-impl LazyBgzfWriter <'_> {
-
+impl LazyBgzfWriter<'_> {
     /// Creates a new LazyBgzfWriter.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `path` - The path to the file.
     /// * `tpool` - The thread pool to use for writing.
 
     fn new<'a>(path: String, tpool: &'a ThreadPool) -> LazyBgzfWriter {
         LazyBgzfWriter {
-            writer:  None,
-            path:    path,
-            tpool:   tpool,
-            written: false
+            writer: None,
+            path: path,
+            tpool: tpool,
+            written: false,
         }
     }
-    
+
     /// Opens the file, if it has not been opened yet, and writes the given bytes to it.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `bytes` - The bytes to write.
     fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
         self.written = true;
         if self.writer.is_none() {
             let mut writer = Writer::from_path(&self.path)
                 .expect(&format!("Could not open file {} for writing", self.path));
-            writer.set_thread_pool(&self.tpool)
+            writer
+                .set_thread_pool(&self.tpool)
                 .expect(&format!("Could not set thread pool {}", self.path));
             self.writer = Some(writer);
         }
@@ -69,11 +68,11 @@ fn sanitize_string_for_filename(s: String) -> String {
 }
 
 /// Splits a tabix-index fragment file into multiple files based on cell type.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `path_to_fragments` - Path to the fragments file.
-/// * `path_to_output_folder` - Path to the output folder, 
+/// * `path_to_output_folder` - Path to the output folder,
 ///     one file per cell type will be written here and the cell type name will be used as the filename.
 ///     If there are no fragments for a cell type, no file will be written for that cell type.
 /// * `cell_barcode_to_cell_type` - A HashMap mapping cell barcodes to cell types.
@@ -81,30 +80,32 @@ fn sanitize_string_for_filename(s: String) -> String {
 /// * `number_of_threads` - Number of threads to use for writing.
 /// * `verbose` - Whether to print progress messages.
 
-
 pub fn split_fragments_by_cell_barcode(
     path_to_fragments: &String,
     path_to_output_folder: &String,
     cell_barcode_to_cell_type: HashMap<String, String>,
     chromsizes: HashMap<String, u64>,
     number_of_threads: u32,
-    verbose: bool)
-{
+    verbose: bool,
+) {
     // Initialize reader
     let mut tbx_reader = tbx::Reader::from_path(path_to_fragments)
         .expect(&format!("Could not open file {}", path_to_fragments));
-    
+
     // Initialize writers
     // Use lazy writer to avoid generating empty files
-    let writer_tpool = ThreadPool::new(number_of_threads)
-        .expect(&format!("Could not create thread pool with {} threads", number_of_threads));
+    let writer_tpool = ThreadPool::new(number_of_threads).expect(&format!(
+        "Could not create thread pool with {} threads",
+        number_of_threads
+    ));
     let mut cell_type_to_writer: HashMap<&String, LazyBgzfWriter> = HashMap::new();
     let unique_cell_types: Vec<&String> = cell_barcode_to_cell_type.values().unique().collect();
     for cell_type in unique_cell_types {
-        let cell_type_name = sanitize_string_for_filename(
-            cell_type.clone().to_string()
+        let cell_type_name = sanitize_string_for_filename(cell_type.clone().to_string());
+        let path_to_output = format!(
+            "{}/{}.fragments.tsv.gz",
+            path_to_output_folder, cell_type_name
         );
-        let path_to_output = format!("{}/{}.fragments.tsv.gz", path_to_output_folder, cell_type_name);
         let lazy_writer = LazyBgzfWriter::new(path_to_output, &writer_tpool);
         cell_type_to_writer.insert(cell_type, lazy_writer);
     }
@@ -113,25 +114,30 @@ pub fn split_fragments_by_cell_barcode(
     let mut read: Vec<u8> = Vec::new();
 
     let contigs_in_fragments_file = tbx_reader.seqnames();
-    
-    for contig in chromsizes.keys().sorted(){
+
+    for contig in chromsizes.keys().sorted() {
         if !contigs_in_fragments_file.contains(&contig) {
             log(
-                &format!("Skipping contig {} because it is not in the fragments file", contig),
-                verbose
+                &format!(
+                    "Skipping contig {} because it is not in the fragments file",
+                    contig
+                ),
+                verbose,
             );
             continue;
         }
-        log(
-            &format!("Processing contig {}", contig),
-            verbose
-        );
+        log(&format!("Processing contig {}", contig), verbose);
         // get contig id and size and fetch whole contig
-        let contig_id = tbx_reader.tid(contig)
+        let contig_id = tbx_reader
+            .tid(contig)
             .expect(&format!("Could not get contig id for contig {}", contig));
         let contig_size = chromsizes.get(contig).unwrap();
-        tbx_reader.fetch(contig_id, 0, *contig_size)
-            .expect(&format!("Could not fetch contig {} from fragments file", contig));
+        tbx_reader
+            .fetch(contig_id, 0, *contig_size)
+            .expect(&format!(
+                "Could not fetch contig {} from fragments file",
+                contig
+            ));
 
         // read first read of contig
         let mut not_at_end = tbx_reader.read(&mut read).unwrap();
@@ -149,7 +155,7 @@ pub fn split_fragments_by_cell_barcode(
             not_at_end = tbx_reader.read(&mut read).unwrap();
             read_as_str = String::from_utf8(read.clone()).unwrap();
         }
-        
+
         // flush buffers
         for writer in cell_type_to_writer.values_mut() {
             if writer.written {

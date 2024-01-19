@@ -1,13 +1,13 @@
-mod split_fragments;
 mod aggregate_fragments;
+mod split_fragments;
 
-use std::collections::HashMap;
 use pyo3::prelude::*;
+use std::collections::HashMap;
 
 /// Split fragments by cell barcode.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `path_to_fragments` - Path to the fragments file.
 /// * `path_to_output_folder` - Path to the output folder,
 ///    one file per cell type will be written here and the cell type name will be used as the filename.
@@ -15,9 +15,9 @@ use pyo3::prelude::*;
 /// * `cell_type_to_cell_barcodes` - A HashMap mapping cell types to cell barcodes.
 /// * `chromsizes` - A HashMap mapping chromosome names to chromosome sizes.
 /// * `verbose` - Whether to print progress messages.
-/// 
+///
 /// # Example
-/// 
+///
 /// ```python
 /// from scatac_fragment_tools import _rust_scatac_fragment_tools
 /// rust_scatac_fragment_tools.split_fragments_by_cell_barcode(
@@ -41,9 +41,9 @@ fn split_fragments_by_cell_barcode(
     path_to_output_folder: String,
     cell_type_to_cell_barcodes: HashMap<String, Vec<String>>,
     chromsizes: HashMap<String, u64>,
-    verbose: bool
+    verbose: bool,
 ) -> PyResult<()> {
-    // Invert cell_type_to_cell_barcodes 
+    // Invert cell_type_to_cell_barcodes
     let mut cell_barcode_to_cell_type: HashMap<String, String> = HashMap::new();
     for (cell_type, cell_barcodes) in cell_type_to_cell_barcodes.iter() {
         for cell_barcode in cell_barcodes.iter() {
@@ -56,21 +56,22 @@ fn split_fragments_by_cell_barcode(
         cell_barcode_to_cell_type,
         chromsizes,
         5,
-        verbose);
+        verbose,
+    );
     Ok(())
 }
 
 /// Merge fragment files.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `path_to_fragment_files` - Paths to the fragment files.
 /// * `path_to_output_file` - Path to the output file.
 /// * `number_of_threads` - Number of threads to use for writing.
 /// * `verbose` - Whether to print progress messages.
-/// 
+///
 /// # Example
-/// 
+///
 /// ```python
 /// from scatac_fragment_tools import _rust_scatac_fragment_tools
 /// rust_scatac_fragment_tools.merge_fragment_files(
@@ -89,13 +90,14 @@ fn merge_fragment_files(
     path_to_fragment_files: Vec<String>,
     path_to_output_file: String,
     number_of_threads: u32,
-    verbose: bool
+    verbose: bool,
 ) -> PyResult<()> {
     aggregate_fragments::merge_fragment_files(
         &path_to_fragment_files,
         &path_to_output_file,
         number_of_threads,
-        verbose);
+        verbose,
+    );
     Ok(())
 }
 
