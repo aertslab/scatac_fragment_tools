@@ -31,7 +31,7 @@ aux_links: # remove if you don't want this link to appear on your pages
 theme: just-the-docs
 plugins:
   - jekyll-feed
-  - jekyll-default-layout
+  - just-the-docs
   
 
 # Exclude from processing.
