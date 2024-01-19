@@ -53,10 +53,10 @@ impl LazyBgzfWriter<'_> {
         self.written = true;
         if self.writer.is_none() {
             let mut writer = Writer::from_path(&self.path)
-                .expect(&format!("Could not open file {} for writing", self.path));
+                .unwrap_or_else(|_| panic!("Could not open file {} for writing", self.path));
             writer
-                .set_thread_pool(&self.tpool)
-                .expect(&format!("Could not set thread pool {}", self.path));
+                .set_thread_pool(self.tpool)
+                .unwrap_or_else(|_| panic!("Could not set thread pool {}", self.path));
             self.writer = Some(writer);
         }
         self.writer.as_mut().unwrap().write(bytes)
@@ -90,14 +90,16 @@ pub fn split_fragments_by_cell_barcode(
 ) {
     // Initialize reader
     let mut tbx_reader = tbx::Reader::from_path(path_to_fragments)
-        .expect(&format!("Could not open file {}", path_to_fragments));
+        .unwrap_or_else(|_| panic!("Could not open file {}", path_to_fragments));
 
     // Initialize writers
     // Use lazy writer to avoid generating empty files
-    let writer_tpool = ThreadPool::new(number_of_threads).expect(&format!(
-        "Could not create thread pool with {} threads",
-        number_of_threads
-    ));
+    let writer_tpool = ThreadPool::new(number_of_threads).unwrap_or_else(|_| {
+        panic!(
+            "Could not create thread pool with {} threads",
+            number_of_threads
+        )
+    });
     let mut cell_type_to_writer: HashMap<&String, LazyBgzfWriter> = HashMap::new();
     let unique_cell_types: Vec<&String> = cell_barcode_to_cell_type.values().unique().collect();
     for cell_type in unique_cell_types {
@@ -130,14 +132,11 @@ pub fn split_fragments_by_cell_barcode(
         // get contig id and size and fetch whole contig
         let contig_id = tbx_reader
             .tid(contig)
-            .expect(&format!("Could not get contig id for contig {}", contig));
+            .unwrap_or_else(|_| panic!("Could not get contig id for contig {}", contig));
         let contig_size = chromsizes.get(contig).unwrap();
         tbx_reader
             .fetch(contig_id, 0, *contig_size)
-            .expect(&format!(
-                "Could not fetch contig {} from fragments file",
-                contig
-            ));
+            .unwrap_or_else(|_| panic!("Could not fetch contig {} from fragments file", contig));
 
         // read first read of contig
         let mut not_at_end = tbx_reader.read(&mut read).unwrap();

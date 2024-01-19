@@ -11,11 +11,9 @@ use std::fs::File;
 use std::io::{Read as IoRead, Write};
 
 fn read_fragments_file(file_name: &String, buffer: &mut String) {
-    let f = File::open(file_name).expect(&format!("Could not open file {}", file_name));
-    let mut reader = BGZFReader::new(f).expect(&format!(
-        "Could not create BGZF reader for file {}",
-        file_name
-    ));
+    let f = File::open(file_name).unwrap_or_else(|_| panic!("Could not open file {}", file_name));
+    let mut reader = BGZFReader::new(f)
+        .unwrap_or_else(|_| panic!("Could not create BGZF reader for file {}", file_name));
     // Try to read file into buffer
     match reader.read_to_string(buffer) {
         Ok(_) => (),
@@ -140,18 +138,17 @@ pub fn merge_fragment_files(
     verbose: bool,
 ) {
     // initialize writer
-    let tpool = ThreadPool::new(number_of_threads).expect(&format!(
-        "Could not create thread pool with {} threads",
-        number_of_threads
-    ));
-    let mut writer = Writer::from_path(&path_to_output_file).expect(&format!(
-        "Could not open file {} for writing",
-        path_to_output_file
-    ));
-    writer.set_thread_pool(&tpool).expect(&format!(
-        "Could not set thread pool for file {}",
-        path_to_output_file
-    ));
+    let tpool = ThreadPool::new(number_of_threads).unwrap_or_else(|_| {
+        panic!(
+            "Could not create thread pool with {} threads",
+            number_of_threads
+        )
+    });
+    let mut writer = Writer::from_path(path_to_output_file)
+        .unwrap_or_else(|_| panic!("Could not open file {} for writing", path_to_output_file));
+    writer
+        .set_thread_pool(&tpool)
+        .unwrap_or_else(|_| panic!("Could not set thread pool for file {}", path_to_output_file));
 
     // initialize buffer
     let mut buffer = String::new();
