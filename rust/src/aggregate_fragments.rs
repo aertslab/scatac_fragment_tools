@@ -173,8 +173,8 @@ pub fn merge_fragment_files(
     // write fragments
     log("Writing fragments", verbose);
     for fragment in fragments {
-        writer.write(fragment.to_string().as_bytes()).unwrap();
-        writer.write(b"\n").unwrap();
+        writer.write_all(fragment.to_string().as_bytes()).unwrap();
+        writer.write_all(b"\n").unwrap();
     }
     writer.flush().unwrap();
 }
