@@ -310,11 +310,13 @@ def fragments_to_bw(
     normalize: bool = True,
     scaling_factor: float = 1.0,
     cut_sites: bool = False,
+    verbose: bool = False
 ):
     chrom_arrays = {}
 
     with pyBigWig.open(bw_filename, "wb") as bw:
-        print("Add chromosome sizes to bigWig header")
+        if verbose:
+            print("Add chromosome sizes to bigWig header")
         bw.addHeader(list(chrom_sizes.items()))
 
         for chrom, chrom_size in chrom_sizes.items():
@@ -322,15 +324,18 @@ def fragments_to_bw(
 
         n_fragments = 0
 
-        print(f"Number of fragments: {fragments_df.height}")
-        print("Split fragments df by chromosome")
+        if verbose:
+            print(f"Number of fragments: {fragments_df.height}")
+            print("Split fragments df by chromosome")
         per_chrom_fragments_dfs = fragments_df.partition_by("Chromosome", as_dict=True)
 
-        print("Calculate depth per chromosome:")
+        if verbose:
+            print("Calculate depth per chromosome:")
         for chrom in per_chrom_fragments_dfs:
             print(f"  - {chrom} ...")
             if chrom not in chrom_sizes:
-                print(f"    Skipping {chrom} as it is not in chrom sizes file.")
+                if verbose:
+                    print(f"    Skipping {chrom} as it is not in chrom sizes file.")
                 continue
             starts, ends = (
                 per_chrom_fragments_dfs[chrom].select(["Start", "End"]).to_numpy().T
@@ -346,12 +351,13 @@ def fragments_to_bw(
 
         # Calculate RPM scaling factor.
         rpm_scaling_factor = n_fragments / 1_000_000.0
-
-        print(
-            "Compact depth array per chromosome (make ranges for consecutive the same values and remove zeros):"
-        )
+        if verbose:
+            print(
+                "Compact depth array per chromosome (make ranges for consecutive the same values and remove zeros):"
+            )
         for chrom in chrom_sizes:
-            print(f"  - Compact {chrom} ...")
+            if verbose:
+                print(f"  - Compact {chrom} ...")
             idx, values, lengths = collapse_consecutive_values(chrom_arrays[chrom])
             non_zero_idx = np.flatnonzero(values)
 
@@ -371,5 +377,6 @@ def fragments_to_bw(
             elif scaling_factor != 1.0:
                 values *= scaling_factor
 
-            print(f"  - Write {chrom} to bigWig ...")
+            if verbose:
+                print(f"  - Write {chrom} to bigWig ...")
             bw.addEntries(chroms=chroms, starts=starts, ends=ends, values=values)

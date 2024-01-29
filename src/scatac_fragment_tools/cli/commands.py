@@ -40,6 +40,7 @@ def command_fragment_to_bigwigs(args):
         args.normalize,
         args.scaling_factor,
         args.cut_sites,
+        args.verbose
     )
 
 def command_split_fragments_by_cell_type(args):

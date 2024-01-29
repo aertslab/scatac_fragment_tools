@@ -125,6 +125,14 @@ def add_fragments_to_bigwig_subparser(
         default=False,
         help="Add chromosome prefix to each chromosome name found in the fragments file.",
     )
+    parser.add_optional_argument(
+        "-v",
+        "--verbose",
+        dest = "verbose",
+        action = "store_true",
+        default = False,
+        help = "Whether to print progress.",
+    )
     return parser.get_parser()
 
 
