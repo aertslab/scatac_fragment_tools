@@ -332,7 +332,8 @@ def fragments_to_bw(
         if verbose:
             print("Calculate depth per chromosome:")
         for chrom in per_chrom_fragments_dfs:
-            print(f"  - {chrom} ...")
+            if verbose:
+                print(f"  - {chrom} ...")
             if chrom not in chrom_sizes:
                 if verbose:
                     print(f"    Skipping {chrom} as it is not in chrom sizes file.")
