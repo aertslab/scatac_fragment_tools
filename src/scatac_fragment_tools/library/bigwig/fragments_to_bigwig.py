@@ -10,10 +10,10 @@ import numpy as np
 import polars as pl
 import pyarrow as pa
 import pyarrow.csv
-import pyBigWig
 
 
 def get_chromosome_sizes(chrom_sizes_filename: str):
+    """Read chromosome sizes from a file and return a dictionary with chromosome names as keys and chromosome sizes as values."""  # noqa: W505
     chrom_sizes = {}
 
     with open(chrom_sizes_filename, "r") as fh:  # noqa: UP015
@@ -243,6 +243,7 @@ def read_fragments_to_polars_df(
 
 @numba.njit
 def calculate_depth(chrom_size, starts, ends):
+    """Calculate depth per basepair for a chromosome based on starts end ends of fragments on the current chromosome."""  # noqa: W505
     # Initialize array for current chromosome to store the depth per basepair.
     chrom_depth = np.zeros(chrom_size, dtype=np.uint32)
 
@@ -258,6 +259,7 @@ def calculate_depth(chrom_size, starts, ends):
 
 @numba.njit
 def collapse_consecutive_values(X):
+    """Collapse consecutive values in array and return indices, values and lengths."""
     # Length.
     n = X.shape[0]
 
@@ -303,6 +305,226 @@ def collapse_consecutive_values(X):
     return idx, values, lengths
 
 
+def fragments_to_coverage(
+    fragments_df: pl.DataFrame,
+    chrom_sizes: dict[str, int],
+    normalize: bool = True,
+    scaling_factor: float = 1.0,
+    cut_sites: bool = False,
+    verbose: bool = False,
+):
+    """
+    Calculate genome coverage for fragments and yield per chromosome a chroms, starts, ends and values numpy array.
+
+    Parameters
+    ----------
+    fragments_df
+        Polars DataFrame with fragments.
+    chrom_sizes
+        Dictionary with chromosome names as keys and chromosome sizes as values.
+    normalize
+        Whether to normalize the coverage by dividing by the number of fragments
+        multiplied by 1 million.
+    scaling_factor
+        Scaling factor for coverage data. If normalization is enabled, scaling is
+        applied afterwards.
+    cut_sites
+        Use 1 bp Tn5 cut sites (start and end of each fragment) instead of whole
+        fragment length for coverage calculation.
+    verbose
+        Whether to print progress.
+
+    """  # noqa: W505
+    chrom_arrays = {}
+
+    for chrom, chrom_size in chrom_sizes.items():
+        chrom_arrays[chrom] = np.zeros(chrom_size, dtype=np.uint32)
+
+    n_fragments = 0
+
+    if verbose:
+        print(f"Number of fragments: {fragments_df.height}")
+        print("Split fragments df by chromosome")
+
+    per_chrom_fragments_dfs = fragments_df.partition_by("Chromosome", as_dict=True)
+
+    if verbose:
+        print("Calculate depth per chromosome:")
+
+    for chrom in per_chrom_fragments_dfs:
+        if verbose:
+            print(f"  - {chrom} ...")
+
+        if chrom not in chrom_sizes:
+            if verbose:
+                print(f"    Skipping {chrom} as it is not in chrom sizes file.")
+            continue
+
+        starts, ends = (
+            per_chrom_fragments_dfs[chrom].select(["Start", "End"]).to_numpy().T
+        )
+
+        if cut_sites:
+            # Create cut site positions (for both start and end of a fragment).
+            starts, ends = (
+                np.hstack((starts, ends - 1)),
+                np.hstack((starts + 1, ends)),
+            )
+
+        chrom_arrays[chrom] = calculate_depth(chrom_sizes[chrom], starts, ends)
+        n_fragments += per_chrom_fragments_dfs[chrom].height
+
+    # Calculate RPM scaling factor.
+    rpm_scaling_factor = n_fragments / 1_000_000.0
+
+    if verbose:
+        print(
+            "Compact depth array per chromosome (make ranges for consecutive the same values and remove zeros):"
+        )
+
+    for chrom in chrom_sizes:
+        if verbose:
+            print(f"  - Compact {chrom} ...")
+
+        idx, values, lengths = collapse_consecutive_values(chrom_arrays[chrom])
+        non_zero_idx = np.flatnonzero(values)
+
+        if non_zero_idx.shape[0] == 0:
+            # Skip chromosomes with no depth > 0.
+            continue
+
+        # Select only consecutive different values and calculate start and end
+        # coordinates (in BED format) for each of those ranges.
+        chroms = np.repeat(chrom, len(non_zero_idx))
+        starts = idx[non_zero_idx]
+        ends = idx[non_zero_idx] + lengths[non_zero_idx]
+        values = values[non_zero_idx]
+
+        if normalize:
+            values = values / rpm_scaling_factor * scaling_factor
+        elif scaling_factor != 1.0:
+            values *= scaling_factor
+
+        yield chroms, starts, ends, values
+
+
+def fragments_to_bw_with_pybigwig(
+    fragments_df: pl.DataFrame,
+    chrom_sizes: dict[str, int],
+    bw_filename: str,
+    normalize: bool = True,
+    scaling_factor: float = 1.0,
+    cut_sites: bool = False,
+    verbose: bool = False,
+):
+    """
+    Calculate genome coverage for fragments and write to a bigWig with pyBigWig.
+
+    Parameters
+    ----------
+    fragments_df
+        Polars DataFrame with fragments.
+    chrom_sizes
+        Dictionary with chromosome names as keys and chromosome sizes as values.
+    bw_filename
+        BigWig filename to which the genome coverage data will be written.
+    normalize
+        Whether to normalize the coverage by dividing by the number of fragments
+        multiplied by 1 million.
+    scaling_factor
+        Scaling factor for coverage data. If normalization is enabled, scaling is
+        applied afterwards.
+    cut_sites
+        Use 1 bp Tn5 cut sites (start and end of each fragment) instead of whole
+        fragment length for coverage calculation.
+    verbose
+        Whether to print progress.
+
+    """
+    import pyBigWig
+
+    with pyBigWig.open(bw_filename, "wb") as bw:
+        if verbose:
+            print("Add chromosome sizes to bigWig header")
+
+        bw.addHeader(list(chrom_sizes.items()))
+
+        fragments_to_coverage_chrom_iter = fragments_to_coverage(
+            fragments_df=fragments_df,
+            chrom_sizes=chrom_sizes,
+            normalize=normalize,
+            scaling_factor=scaling_factor,
+            cut_sites=cut_sites,
+        )
+
+        for chroms, starts, ends, values in fragments_to_coverage_chrom_iter:
+            if verbose:
+                print(f"  - Write {chroms[0]} to bigWig ...")
+
+            bw.addEntries(chroms=chroms, starts=starts, ends=ends, values=values)
+
+
+def fragments_to_bw_with_pybigtools(
+    fragments_df: pl.DataFrame,
+    chrom_sizes: dict[str, int],
+    bw_filename: str,
+    normalize: bool = True,
+    scaling_factor: float = 1.0,
+    cut_sites: bool = False,
+    verbose: bool = False,
+):
+    """
+    Calculate genome coverage for fragments and write to a bigWig with pybigtools.
+
+    Parameters
+    ----------
+    fragments_df
+        Polars DataFrame with fragments.
+    chrom_sizes
+        Dictionary with chromosome names as keys and chromosome sizes as values.
+    bw_filename
+        BigWig filename to which the genome coverage data will be written.
+    normalize
+        Whether to normalize the coverage by dividing by the number of fragments
+        multiplied by 1 million.
+    scaling_factor
+        Scaling factor for coverage data. If normalization is enabled, scaling is
+        applied afterwards.
+    cut_sites
+        Use 1 bp Tn5 cut sites (start and end of each fragment) instead of whole
+        fragment length for coverage calculation.
+    verbose
+        Whether to print progress.
+
+    """
+    import pybigtools
+
+    fragments_to_coverage_chrom_iter = fragments_to_coverage(
+        fragments_df=fragments_df,
+        chrom_sizes=chrom_sizes,
+        normalize=normalize,
+        scaling_factor=scaling_factor,
+        cut_sites=cut_sites,
+    )
+
+    def chrom_start_end_value_iter() -> tuple[str, int, int, float]:
+        """Convert per chromosome fragments to coverage output and yield chromosome, start, end and value."""  # noqa: W505
+        for chroms, starts, ends, values in fragments_to_coverage_chrom_iter:
+            if verbose:
+                print(f"  - Write {chroms[0]} to bigWig ...")
+
+            # Chromosome is the same for all fragments in the current chromosome.
+            chrom = chroms[0]
+
+            for start, end, value in zip(
+                starts.tolist(), ends.tolist(), values.tolist()
+            ):
+                yield chrom, start, end, value
+
+    bw = pybigtools.open(bw_filename, "w")
+    bw.write(chrom_sizes, chrom_start_end_value_iter())
+
+
 def fragments_to_bw(
     fragments_df: pl.DataFrame,
     chrom_sizes: dict[str, int],
@@ -310,74 +532,57 @@ def fragments_to_bw(
     normalize: bool = True,
     scaling_factor: float = 1.0,
     cut_sites: bool = False,
-    verbose: bool = False
+    bigwig_writer: Literal["pybigwig"] | Literal["pybigtools"] | str = "pybigwig",
+    verbose: bool = False,
 ):
-    chrom_arrays = {}
+    """
+    Calculate genome coverage for fragments and write to a bigWig file.
 
-    with pyBigWig.open(bw_filename, "wb") as bw:
-        if verbose:
-            print("Add chromosome sizes to bigWig header")
-        bw.addHeader(list(chrom_sizes.items()))
+    Parameters
+    ----------
+    fragments_df
+        Polars DataFrame with fragments.
+    chrom_sizes
+        Dictionary with chromosome names as keys and chromosome sizes as values.
+    bw_filename
+        BigWig filename to which the genome coverage data will be written.
+    normalize
+        Whether to normalize the coverage by dividing by the number of fragments
+        multiplied by 1 million.
+    scaling_factor
+        Scaling factor for coverage data. If normalization is enabled, scaling is
+        applied afterwards.
+    cut_sites
+        Use 1 bp Tn5 cut sites (start and end of each fragment) instead of whole
+        fragment length for coverage calculation.
+    bigwig_writer
+        Which bigWig writer implementation to use.  Allowed values are "pybigwig" and
+        "pybigtools".
+    verbose
+        Whether to print progress.
 
-        for chrom, chrom_size in chrom_sizes.items():
-            chrom_arrays[chrom] = np.zeros(chrom_size, dtype=np.uint32)
-
-        n_fragments = 0
-
-        if verbose:
-            print(f"Number of fragments: {fragments_df.height}")
-            print("Split fragments df by chromosome")
-        per_chrom_fragments_dfs = fragments_df.partition_by("Chromosome", as_dict=True)
-
-        if verbose:
-            print("Calculate depth per chromosome:")
-        for chrom in per_chrom_fragments_dfs:
-            if verbose:
-                print(f"  - {chrom} ...")
-            if chrom not in chrom_sizes:
-                if verbose:
-                    print(f"    Skipping {chrom} as it is not in chrom sizes file.")
-                continue
-            starts, ends = (
-                per_chrom_fragments_dfs[chrom].select(["Start", "End"]).to_numpy().T
-            )
-            if cut_sites:
-                # Create cut site positions (for both start and end of a fragment).
-                starts, ends = (
-                    np.hstack((starts, ends - 1)),
-                    np.hstack((starts + 1, ends)),
-                )
-            chrom_arrays[chrom] = calculate_depth(chrom_sizes[chrom], starts, ends)
-            n_fragments += per_chrom_fragments_dfs[chrom].height
-
-        # Calculate RPM scaling factor.
-        rpm_scaling_factor = n_fragments / 1_000_000.0
-        if verbose:
-            print(
-                "Compact depth array per chromosome (make ranges for consecutive the same values and remove zeros):"
-            )
-        for chrom in chrom_sizes:
-            if verbose:
-                print(f"  - Compact {chrom} ...")
-            idx, values, lengths = collapse_consecutive_values(chrom_arrays[chrom])
-            non_zero_idx = np.flatnonzero(values)
-
-            if non_zero_idx.shape[0] == 0:
-                # Skip chromosomes with no depth > 0.
-                continue
-
-            # Select only consecutive different values and calculate start and end
-            # coordinates (in BED format) for each of those ranges.
-            chroms = np.repeat(chrom, len(non_zero_idx))
-            starts = idx[non_zero_idx]
-            ends = idx[non_zero_idx] + lengths[non_zero_idx]
-            values = values[non_zero_idx]
-
-            if normalize:
-                values = values / rpm_scaling_factor * scaling_factor
-            elif scaling_factor != 1.0:
-                values *= scaling_factor
-
-            if verbose:
-                print(f"  - Write {chrom} to bigWig ...")
-            bw.addEntries(chroms=chroms, starts=starts, ends=ends, values=values)
+    """
+    if bigwig_writer.lower() == "pybigwig":
+        fragments_to_bw_with_pybigwig(
+            fragments_df=fragments_df,
+            chrom_sizes=chrom_sizes,
+            bw_filename=bw_filename,
+            normalize=normalize,
+            scaling_factor=scaling_factor,
+            cut_sites=cut_sites,
+            verbose=verbose,
+        )
+    elif bigwig_writer.lower() == "pybigtools":
+        fragments_to_bw_with_pybigtools(
+            fragments_df=fragments_df,
+            chrom_sizes=chrom_sizes,
+            bw_filename=bw_filename,
+            normalize=normalize,
+            scaling_factor=scaling_factor,
+            cut_sites=cut_sites,
+            verbose=verbose,
+        )
+    else:
+        raise ValueError(
+            f'Unsupported bigwig writer, value "{bigwig_writer}" (allowed: ["pybigwig", "pybigtools"]).'
+        )

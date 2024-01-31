@@ -18,6 +18,7 @@ _REQUIRED_ARGUMENTS_NAME = "Required arguments"
 _OPTIONAL_ARGUMENTS_NAME = "Optional arguments"
 _FORMATTER_CLASS = RichHelpFormatter
 
+
 class SubparserBuilder:
     """
     Helper class for building subparsers.
@@ -117,6 +118,16 @@ def add_fragments_to_bigwig_subparser(
         default=False,
         help="Use 1 bp Tn5 cut sites (start and end of each fragment) instead of whole "
         "fragment length for coverage calculation.",
+    )
+    parser.add_optional_argument(
+        "-w",
+        "--writer",
+        dest="bigwig_writer",
+        action="store",
+        type=str.lower,
+        choices=["pybigtools", "pybigwig"],
+        default="pybigwig",
+        help="Which bigWig writer implementation to use.",
     )
     parser.add_optional_argument(
         "--chrom-prefix",
