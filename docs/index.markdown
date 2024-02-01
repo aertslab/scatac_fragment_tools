@@ -8,7 +8,7 @@ nav_order: 1
 
 # scATAC-seq Fragment Tools
 
-Tools for manipulating scATAC-seq fragment files
+Tools for manipulating scATAC-seq fragment files.
 
 ## Installation
 
