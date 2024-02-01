@@ -12,4 +12,4 @@ pip install .
 
 ## Usage
 
-Please visit the [documentation](https://chrisholdgraf.com/blog/2022/install-github-from-pyproject/)
+Please visit the [documentation](https://aertslab.github.io/scatac_fragment_tools/)
