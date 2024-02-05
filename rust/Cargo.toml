@@ -9,9 +9,8 @@ name = "_rust_scatac_fragment_tools"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "0.19.0"
-rust-htslib = "0.44.1"
-# 0.1.27 fails with error[E0412]: cannot find type `RawFd` in `std::os::fd
-jobserver = ">=0.1.25,<0.1.27"
 bgzip = "0.3.1"
-itertools = "0.8.2"
+itertools = "0.12.1"
+jobserver = "0.1.27"
+pyo3 = { version = "0.20.2", features = ["abi3-py38", "extension-module"] }
+rust-htslib = { version = "0.44.1", default-features = false, features = ["libdeflate"] }
