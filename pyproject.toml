@@ -6,20 +6,20 @@ build-backend = "maturin"
 name = "scatac_fragment_tools"
 requires-python = ">=3.8"
 classifiers = [
-    "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = ["version"]
 dependencies = [
-    "numpy",
-    "pyBigWig",
-    "pybigtools",
-    "polars",
-    "pyarrow",
-    "numba",
-    "rich-argparse",
-    "joblib"
+  "numpy",
+  "pyBigWig",
+  "pybigtools",
+  "polars",
+  "pyarrow",
+  "numba",
+  "rich-argparse",
+  "joblib",
 ]
 
 [tool.maturin]
@@ -28,10 +28,10 @@ module-name = "scatac_fragment_tools._rust_scatac_fragment_tools"
 
 [project.optional-dependencies]
 development = [
-    "mypy",
-    "black",
-    "ruff",
-    "pytest",
+  "mypy",
+  "black",
+  "ruff",
+  "pytest",
 ]
 
 [project.scripts]
@@ -40,7 +40,7 @@ scatac_fragment_tools = "scatac_fragment_tools.cli.main:main"
 [tool.ruff]
 target-version = "py38"
 line-length = 88
-#fix = true
+# fix = true
 
 select = [
   "E", # pycodestyle
@@ -88,6 +88,9 @@ ignore = [
   "D101",
 ]
 
+[tool.ruff.format]
+docstring-code-format = true
+
 [tool.ruff.pycodestyle]
 max-doc-length = 88
 
@@ -97,6 +100,6 @@ ban-relative-imports = "all"
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = [
-    "tests",
+  "tests",
 ]
 addopts = "--verbose"
