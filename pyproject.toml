@@ -4,6 +4,9 @@ build-backend = "maturin"
 
 [project]
 name = "scatac_fragment_tools"
+description = "Tools for working with scATAC-seq fragment files."
+readme = "README.md"
+keywords = ["scATAC-seq", "scATAC", "fragment files"]
 requires-python = ">=3.8"
 classifiers = [
   "Programming Language :: Rust",
@@ -22,20 +25,25 @@ dependencies = [
   "joblib",
 ]
 
-[tool.maturin]
-features = ["pyo3/extension-module"]
-module-name = "scatac_fragment_tools._rust_scatac_fragment_tools"
+[project.urls]
+homepage = "https://github.com/aertslab/scatac_fragment_tools/"
+documentation = "https://aertslab.github.io/scatac_fragment_tools/"
+repository = "https://github.com/aertslab/scatac_fragment_tools/"
+changelog = "https://github.com/aertslab/scatac_fragment_tools/commits/main/"
 
 [project.optional-dependencies]
 development = [
   "mypy",
-  "black",
   "ruff",
   "pytest",
 ]
 
 [project.scripts]
 scatac_fragment_tools = "scatac_fragment_tools.cli.main:main"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+module-name = "scatac_fragment_tools._rust_scatac_fragment_tools"
 
 [tool.ruff]
 target-version = "py38"
