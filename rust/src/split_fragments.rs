@@ -83,7 +83,7 @@ fn sanitize_string_for_filename(s: String) -> String {
 pub fn split_fragments_by_cell_barcode(
     path_to_fragments: &String,
     path_to_output_folder: &String,
-    cell_barcode_to_cell_type: HashMap<String, String>,
+    cell_barcode_to_cell_type: HashMap<String, Vec<String>>,
     chromsizes: HashMap<String, u64>,
     number_of_threads: u32,
     verbose: bool,
@@ -101,7 +101,11 @@ pub fn split_fragments_by_cell_barcode(
         )
     });
     let mut cell_type_to_writer: HashMap<&String, LazyBgzfWriter> = HashMap::new();
-    let unique_cell_types: Vec<&String> = cell_barcode_to_cell_type.values().unique().collect();
+    let unique_cell_types: Vec<&String> = cell_barcode_to_cell_type
+        .values()
+        .flatten()
+        .unique()
+        .collect();
     for cell_type in unique_cell_types {
         let cell_type_name = sanitize_string_for_filename(cell_type.clone().to_string());
         let path_to_output = format!(
@@ -145,10 +149,12 @@ pub fn split_fragments_by_cell_barcode(
         // loop over reads
         while not_at_end {
             let read_cb = read_as_str.split('\t').nth(3).unwrap().to_string();
-            if let Some(cell_type) = cell_barcode_to_cell_type.get(&read_cb) {
-                let writer = cell_type_to_writer.get_mut(cell_type).unwrap();
-                writer.write(&read).unwrap();
-                writer.write(b"\n").unwrap();
+            if let Some(cell_types) = cell_barcode_to_cell_type.get(&read_cb) {
+                for cell_type in cell_types {
+                    let writer = cell_type_to_writer.get_mut(cell_type).unwrap();
+                    writer.write(&read).unwrap();
+                    writer.write(b"\n").unwrap();
+                }
             }
             read.clear();
             not_at_end = tbx_reader.read(&mut read).unwrap();
