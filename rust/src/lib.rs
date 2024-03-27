@@ -44,10 +44,13 @@ fn split_fragments_by_cell_barcode(
     verbose: bool,
 ) -> PyResult<()> {
     // Invert cell_type_to_cell_barcodes
-    let mut cell_barcode_to_cell_type: HashMap<String, String> = HashMap::new();
+    let mut cell_barcode_to_cell_type: HashMap<String, Vec<String>> = HashMap::new();
     for (cell_type, cell_barcodes) in cell_type_to_cell_barcodes.iter() {
         for cell_barcode in cell_barcodes.iter() {
-            cell_barcode_to_cell_type.insert(cell_barcode.to_string(), cell_type.to_string());
+            cell_barcode_to_cell_type
+                .entry(cell_barcode.to_string())
+                .or_insert(Vec::new())
+                .push(cell_type.to_string());
         }
     }
     split_fragments::split_fragments_by_cell_barcode(

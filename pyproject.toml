@@ -29,7 +29,7 @@ dependencies = [
 homepage = "https://github.com/aertslab/scatac_fragment_tools/"
 documentation = "https://aertslab.github.io/scatac_fragment_tools/"
 repository = "https://github.com/aertslab/scatac_fragment_tools/"
-changelog = "https://github.com/aertslab/scatac_fragment_tools/commits/main/"
+changelog = "https://raw.githubusercontent.com/aertslab/scatac_fragment_tools/CHANGELOG.md"
 
 [project.optional-dependencies]
 development = [
