@@ -105,7 +105,7 @@ fn merge_fragment_files(
 }
 
 #[pymodule]
-fn _rust_scatac_fragment_tools(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn _rust_scatac_fragment_tools(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // set version dunder
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     // add functions
