@@ -143,7 +143,7 @@ def command_split_fragments_by_cell_type(args):
     d_cell_type_to_cell_barcode_definition = pl.scan_csv(
         args.path_to_cell_type_to_cell_barcode_definition,
         separator=args.separator) \
-        .groupby([args.sample_column_name, args.cell_type_column_name]) \
+        .group_by([args.sample_column_name, args.cell_type_column_name]) \
         .agg(pl.col(args.cell_barcode_column_name)) \
         .collect() \
         .to_dict()
