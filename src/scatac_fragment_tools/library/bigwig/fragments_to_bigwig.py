@@ -455,6 +455,7 @@ def fragments_to_bw_with_pybigwig(
             normalize=normalize,
             scaling_factor=scaling_factor,
             cut_sites=cut_sites,
+            verbose=verbose,
         )
 
         for chroms, starts, ends, values in fragments_to_coverage_chrom_iter:
@@ -505,6 +506,7 @@ def fragments_to_bw_with_pybigtools(
         normalize=normalize,
         scaling_factor=scaling_factor,
         cut_sites=cut_sites,
+        verbose=verbose,
     )
 
     def chrom_start_end_value_iter() -> tuple[str, int, int, float]:
