@@ -5,7 +5,6 @@
 ### Updated
 
 - **[80db60fb](https://github.com/aertslab/scatac_fragment_tools/commit/80db60fbadeec22e08334f292134fa70e47c9019)**: Update Polars syntax to 1.0.0.
-- **[80db60fb](https://github.com/aertslab/scatac_fragment_tools/commit/80db60fbadeec22e08334f292134fa70e47c9019)**: Update Polars syntax to 1.0.0.
 - **[27b3a059](https://github.com/aertslab/scatac_fragment_tools/commit/27b3a059c23462ebdb7240d10ce4be171cd67ce0)**: Update Polars `groupby` syntax to `group_by`.
 - **[98a55b0d](https://github.com/aertslab/scatac_fragment_tools/commit/98a55b0de121883fca3660a9128871b67e3deead)**: Update pyo3 and itertools dependencies.
 
