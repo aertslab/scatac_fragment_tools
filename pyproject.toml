@@ -15,10 +15,10 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-  "numpy",
+  "numpy<2",
   "pyBigWig",
-  "pybigtools",
-  "polars",
+  "pybigtools>=0.2.0",
+  "polars>=1.0.0",
   "pyarrow",
   "numba",
   "rich-argparse",
