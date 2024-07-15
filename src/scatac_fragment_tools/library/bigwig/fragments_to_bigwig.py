@@ -135,7 +135,7 @@ def read_bed_to_polars_df(
             separator="\t",
             use_pyarrow=False,
             new_columns=bed_column_names[:column_count],
-            dtypes={
+            schema_overrides={
                 bed_column: dtype
                 for bed_column, dtype in {
                     "Chromosome": pl.Categorical,
@@ -346,7 +346,13 @@ def fragments_to_coverage(
         print(f"Number of fragments: {fragments_df.height}")
         print("Split fragments df by chromosome")
 
-    per_chrom_fragments_dfs = fragments_df.partition_by("Chromosome", as_dict=True)
+    per_chrom_fragments_dfs = {
+        str(chrom): fragments_chrom_df_pl
+        for (chrom,), fragments_chrom_df_pl in fragments_df.partition_by(
+            ["Chromosome"],
+            as_dict=True,
+        ).items()
+    }
 
     if verbose:
         print("Calculate depth per chromosome:")
