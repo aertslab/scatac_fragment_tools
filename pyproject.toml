@@ -50,7 +50,7 @@ target-version = "py38"
 line-length = 88
 # fix = true
 
-select = [
+lint.select = [
   "E", # pycodestyle
   "W", # pycodestyle
   "F", # Pyflakes
@@ -67,7 +67,7 @@ select = [
   "RUF", # Ruff-specific rules
 ]
 
-ignore = [
+lint.ignore = [
   # Line length regulated by black
   "E501",
   # pydocstyle: http://www.pydocstyle.org/en/stable/error_codes.html
@@ -96,14 +96,14 @@ ignore = [
   "D101",
 ]
 
-[tool.ruff.format]
-docstring-code-format = true
-
-[tool.ruff.pycodestyle]
+[tool.ruff.lint.pycodestyle]
 max-doc-length = 88
 
-[tool.ruff.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
+
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
