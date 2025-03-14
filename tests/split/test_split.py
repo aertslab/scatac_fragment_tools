@@ -26,6 +26,19 @@ FILES_SOME_BARCODES_MAPPING_TO_MULTIPLE_TYPES = {
     "chrom_sizes": "hg38.chrom.sizes"
 }
 
+
+FILES_SORT_ERROR= {
+    "a.fragments": "a.fragments.tsv.gz",
+    "a.fragment_index": "a.fragments.tsv.gz.tbi",
+    "b.fragments": "b.fragments.tsv.gz",
+    "b.fragment_index": "b.fragments.tsv.gz.tbi",
+    "c.fragments": "c.fragments.tsv.gz",
+    "c.fragment_index": "c.fragments.tsv.gz.tbi",
+    "sample_to_fragment": "sample_to_fragment_sort_error.tsv",
+    "cell_type_annotation": "cell_type_annotation_sort_error.tsv",
+    "chrom_sizes": "hg38.chrom.sizes"
+}
+
 def test_entrypoint():
     exit_status = os.system("scatac_fragment_tools split")
     assert exit_status == 0
@@ -42,6 +55,36 @@ def run_split_command(tmp_path, output_folder, file_dict):
     os.system(f"cp {path_to_a_fragment_index} {tmp_path}")
     os.system(f"cp {path_to_b_fragments} {tmp_path}")
     os.system(f"cp {path_to_b_fragment_index} {tmp_path}")
+    os.system(f"cp {path_to_sample_to_fragment} {tmp_path}")
+    os.system(f"cp {path_to_cell_type_annotation} {tmp_path}")
+    os.system(f"cp {path_to_chrom_sizes} {tmp_path}")
+
+    COMMAND = f"""cd {tmp_path} && \
+    scatac_fragment_tools split \
+        -f {path_to_sample_to_fragment} \
+        -b {path_to_cell_type_annotation} \
+        -c {path_to_chrom_sizes} \
+        -o {output_folder} \
+        -t {tmp_path} \
+    """
+    return os.system(COMMAND)
+
+def run_split_command_sort_error(tmp_path, output_folder, file_dict):
+    path_to_a_fragments = os.path.join(TEST_DIRECTORY, file_dict["a.fragments"])
+    path_to_a_fragment_index = os.path.join(TEST_DIRECTORY, file_dict["a.fragment_index"])
+    path_to_b_fragments = os.path.join(TEST_DIRECTORY, file_dict["b.fragments"])
+    path_to_b_fragment_index = os.path.join(TEST_DIRECTORY, file_dict["b.fragment_index"])
+    path_to_c_fragments = os.path.join(TEST_DIRECTORY, file_dict["c.fragments"])
+    path_to_c_fragment_index = os.path.join(TEST_DIRECTORY, file_dict["c.fragment_index"])
+    path_to_sample_to_fragment = os.path.join(TEST_DIRECTORY, file_dict["sample_to_fragment"])
+    path_to_cell_type_annotation = os.path.join(TEST_DIRECTORY, file_dict["cell_type_annotation"])
+    path_to_chrom_sizes = os.path.join(TEST_DIRECTORY, file_dict["chrom_sizes"])
+    os.system(f"cp {path_to_a_fragments} {tmp_path}")
+    os.system(f"cp {path_to_a_fragment_index} {tmp_path}")
+    os.system(f"cp {path_to_b_fragments} {tmp_path}")
+    os.system(f"cp {path_to_b_fragment_index} {tmp_path}")
+    os.system(f"cp {path_to_c_fragments} {tmp_path}")
+    os.system(f"cp {path_to_c_fragment_index} {tmp_path}")
     os.system(f"cp {path_to_sample_to_fragment} {tmp_path}")
     os.system(f"cp {path_to_cell_type_annotation} {tmp_path}")
     os.system(f"cp {path_to_chrom_sizes} {tmp_path}")
@@ -108,3 +151,8 @@ def test_split_command_bc_single_type(tmp_path):
 def test_split_command_barcode_mapping_multiple_types(tmp_path):
     split_command_test_helper(tmp_path, FILES_SOME_BARCODES_MAPPING_TO_MULTIPLE_TYPES)
 
+def test_split_command_sort_error(tmp_path):
+    output_folder = os.path.join(tmp_path, "output")
+    os.makedirs(output_folder, exist_ok=True)
+    exit_status = run_split_command_sort_error(tmp_path, output_folder, FILES_SORT_ERROR)
+    assert exit_status != 0

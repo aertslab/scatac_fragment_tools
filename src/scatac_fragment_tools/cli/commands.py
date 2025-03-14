@@ -166,7 +166,7 @@ def command_split_fragments_by_cell_type(args):
             raise ValueError(
                 f"Duplicates in {args.path_to_cell_type_to_cell_barcode_definition}, for sample {sample} and cell type {cell_type}"
             )
-        sample_to_cell_type_to_cell_barcodes[sample][cell_type] = cell_barcodes
+        sample_to_cell_type_to_cell_barcodes[sample][cell_type] = list(cell_barcodes)
 
     # Read chromosome sizes
     # and create a dictionary mapping chromosome names to chromosome sizes.
