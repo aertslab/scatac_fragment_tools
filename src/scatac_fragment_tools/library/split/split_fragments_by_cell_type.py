@@ -83,7 +83,6 @@ def split_fragment_files_by_cell_type(
     _rust_scatac_fragment_tools.split_fragment_files_by_cell_type(
         fragment_file_paths=list(sample_to_fragment_file.values()),
         output_directory=path_to_output_folder,
-        temp_directory=path_to_temp_folder + ("/" if not path_to_temp_folder.endswith("/") else ""),
         cell_type_to_fragment_file_to_cell_barcode=cell_type_to_fragment_file_to_cell_barcode,
         chromosomes=list(chromsizes.keys())
     )

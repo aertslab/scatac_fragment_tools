@@ -200,56 +200,59 @@ impl FragmentFileReader {
     }
 }
 
-fn split_fragments_by_cell_barcodes_for_chromosome(
+fn split_fragments_by_cell_barcodes(
     fragment_file_paths: &[&str],
     fragment_file_to_cell_barcode: &HashMap<String, Vec<String>>,
-    chromosome: &str,
+    chromosomes: &[&str],
     gz_output_file: &mut bgzf::Writer<File>
 ) -> PyResult<()>{
 
-    // Open fragment files which are gzipped, and pos-sorted.
-    let mut readers: Vec<FragmentFileReader> = Vec::new();
-    for (file_index, fragment_file_path) in fragment_file_paths.iter().enumerate() {
-        if let Some(cell_barcodes) = fragment_file_to_cell_barcode.get(&fragment_file_path.to_string()) {
-            readers.push(
-                FragmentFileReader::new(
-                    fragment_file_path,
-                    cell_barcodes.to_vec(),
-                    chromosome.to_string(),
-                    file_index)?
-            );
-        }
-    }
+    for chromosome in chromosomes {
 
-    // A binary heap will be used to write fragments in order from different files
-    let mut heap = BinaryHeap::new();
-    
-    // go to correct chromosome and push first valid fragment to binary heap
-    for reader in readers.iter_mut(){
-        reader.skip_to_chromosome(chromosome)?;
-        if !reader.at_end_of_file  && reader.at_chrom() {
-            if let Some(fragment) = reader.get_next_valid_fragment()? {
-                heap.push(Reverse(fragment));
+        // Open fragment files which are gzipped, and pos-sorted.
+        let mut readers: Vec<FragmentFileReader> = Vec::new();
+        for (file_index, fragment_file_path) in fragment_file_paths.iter().enumerate() {
+            if let Some(cell_barcodes) = fragment_file_to_cell_barcode.get(&fragment_file_path.to_string()) {
+                readers.push(
+                    FragmentFileReader::new(
+                        fragment_file_path,
+                        cell_barcodes.to_vec(),
+                        chromosome.to_string(),
+                        file_index)?
+                );
             }
         }
-    }
 
-    // last start written
-    // if we encounter a lower coordinate we know that the file is not sorted and we should crash
-
-    let mut last_start_written: usize = 0;
-
-    while let Some(Reverse(fragment)) = heap.pop() {
-        if fragment.start < last_start_written {
-            return Err(custom_errors::ValueError::new(format!("Fragment file: {} is not sorted!", fragment.file_name)).into());
+        // A binary heap will be used to write fragments in order from different files
+        let mut heap = BinaryHeap::new();
+        
+        // go to correct chromosome and push first valid fragment to binary heap
+        for reader in readers.iter_mut(){
+            reader.skip_to_chromosome(chromosome)?;
+            if !reader.at_end_of_file  && reader.at_chrom() {
+                if let Some(fragment) = reader.get_next_valid_fragment()? {
+                    heap.push(Reverse(fragment));
+                }
+            }
         }
-        gz_output_file.write_all(format!("{}\n", fragment).as_bytes())?;
-        last_start_written = fragment.start;
-        // read from file that currently has the smallest genomic range
-        let reader = &mut readers[fragment.file_index];
-        if !reader.at_end_of_file && reader.at_chrom() {
-            if let Some(fragment) = reader.get_next_valid_fragment()? {
-                heap.push(Reverse(fragment));
+
+        // last start written
+        // if we encounter a lower coordinate we know that the file is not sorted and we should crash
+
+        let mut last_start_written: usize = 0;
+
+        while let Some(Reverse(fragment)) = heap.pop() {
+            if fragment.start < last_start_written {
+                return Err(custom_errors::ValueError::new(format!("Fragment file: {} is not sorted!", fragment.file_name)).into());
+            }
+            gz_output_file.write_all(format!("{}\n", fragment).as_bytes())?;
+            last_start_written = fragment.start;
+            // read from file that currently has the smallest genomic range
+            let reader = &mut readers[fragment.file_index];
+            if !reader.at_end_of_file && reader.at_chrom() {
+                if let Some(fragment) = reader.get_next_valid_fragment()? {
+                    heap.push(Reverse(fragment));
+                }
             }
         }
     }
@@ -260,38 +263,32 @@ fn split_fragments_by_cell_barcodes_for_chromosome(
 pub fn split_fragment_files_by_cell_type(
     fragment_file_paths: Vec<String>,
     output_directory: &str,
-    temp_directory: &str,
     cell_type_to_fragment_file_to_cell_barcode: HashMap<String, HashMap<String, Vec<String>>>,
     chromosomes: Vec<String>
 ) -> PyResult<()> {
-    for cell_type in cell_type_to_fragment_file_to_cell_barcode.keys() {
-        for chromosome in &chromosomes {
-            let output_file_name = format!("{}/{}.{}.fragments.tsv.gz", temp_directory, cell_type, chromosome);
-            let fragment_file_paths = fragment_file_paths.clone(); // Need to clone since threads take ownership
-            let fragment_file_to_cell_barcode = cell_type_to_fragment_file_to_cell_barcode
-                .get(cell_type)
-                .unwrap()
-                .clone();
+    let mut handles: Vec<thread::JoinHandle<_>> = Vec::new();
+    let output_directory = output_directory.to_string();
+    for (cell_type, fragment_file_to_cell_barcode) in &cell_type_to_fragment_file_to_cell_barcode {
+        let output_directory = output_directory.clone();
+        let cell_type = cell_type.clone();
+        let fragment_file_to_cell_barcode = fragment_file_to_cell_barcode.clone();
+        let fragment_file_paths = fragment_file_paths.clone();
+        let chromosomes = chromosomes.clone();
+        let handle = thread::spawn(move || {
+            let output_file_name = format!("{}/{}.fragments.tsv.gz", &output_directory, cell_type);
             let file = File::create(output_file_name)?;
-            let chromosome = chromosome.clone();
             let mut gz_output_file = bgzf::Writer::new(file);
-            split_fragments_by_cell_barcodes_for_chromosome(
+            split_fragments_by_cell_barcodes(
                 &fragment_file_paths.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
                 &fragment_file_to_cell_barcode,
-                &chromosome,
+                &chromosomes.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
                 &mut gz_output_file
-            )?;
-        }
-        // concat all chromosomes
-        let output_file_name = format!("{}/{}.fragments.tsv.gz", output_directory, cell_type);
-        let output_file = File::create(&output_file_name)?;
-        let mut writer = std::io::BufWriter::new(output_file);
-        for chromosome in &chromosomes {
-            let input_file_name = format!("{}/{}.{}.fragments.tsv.gz", temp_directory, cell_type, chromosome);
-            let mut input_file = File::open(&input_file_name)?;
-            std::io::copy(&mut input_file, &mut writer)?;
-        }
-        writer.flush()?;
+            )
+        });
+        handles.push(handle);
+    }
+    for handle in handles {
+        handle.join().expect("Thread panicked")?;
     }
     Ok(())
 }
