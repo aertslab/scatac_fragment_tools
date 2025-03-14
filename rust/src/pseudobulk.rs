@@ -1,10 +1,9 @@
 use super::custom_errors;
 use std::fmt;
-use std::fmt::format;
 use std::fs::File;
 use std::path::Path;
 use std::collections::BinaryHeap;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::cmp::Reverse;
 use std::io::{BufRead, Write};
 use pyo3::prelude::*;
@@ -84,7 +83,7 @@ struct FragmentFileReader {
     index: Option<tabix::Index>,
     fragment: Result<GenomicRange, custom_errors::InvalidFragmentFileError>,
     buffer: String,
-    valid_cell_barcodes: Vec<String>,
+    valid_cell_barcodes: HashSet<String>,
     target_chrom: String,
     file_index: usize,
     file_name: String,
@@ -92,7 +91,7 @@ struct FragmentFileReader {
 }
 
 impl FragmentFileReader {
-    fn new(fragment_file_path: &str, valid_cell_barcodes: Vec<String>, target_chrom: String, file_index: usize) -> Result<FragmentFileReader, std::io::Error> {
+    fn new(fragment_file_path: &str, valid_cell_barcodes: HashSet<String>, target_chrom: String, file_index: usize) -> Result<FragmentFileReader, std::io::Error> {
         let reader = bgzf::Reader::new(File::open(Path::new(fragment_file_path))?);
         let mut index: Option<tabix::Index> = None;
         if Path::new(&format!("{}.tbi", fragment_file_path)).exists() {
@@ -204,7 +203,7 @@ fn split_fragments_by_cell_barcodes(
     fragment_file_paths: &[&str],
     fragment_file_to_cell_barcode: &HashMap<String, Vec<String>>,
     chromosomes: &[&str],
-    gz_output_file: &mut bgzf::Writer<File>
+    gz_output_file: &mut std::io::BufWriter<bgzf::Writer<File>>
 ) -> PyResult<()>{
 
     for chromosome in chromosomes {
@@ -217,7 +216,7 @@ fn split_fragments_by_cell_barcodes(
                 readers.push(
                     FragmentFileReader::new(
                         fragment_file_path,
-                        cell_barcodes.to_vec(),
+                        cell_barcodes.into_iter().cloned().collect::<HashSet<String>>(),
                         chromosome.to_string(),
                         file_index)?
                 );
@@ -258,6 +257,7 @@ fn split_fragments_by_cell_barcodes(
             }
         }
     }
+    gz_output_file.flush()?;
     Ok(())
 }
 
@@ -279,12 +279,13 @@ pub fn split_fragment_files_by_cell_type(
         let handle = thread::spawn(move || {
             let output_file_name = format!("{}/{}.fragments.tsv.gz", &output_directory, cell_type);
             let file = File::create(output_file_name)?;
-            let mut gz_output_file = bgzf::Writer::new(file);
+            let gz_output_file = bgzf::Writer::new(file);
+            let mut buffered_writer = std::io::BufWriter::new(gz_output_file); 
             split_fragments_by_cell_barcodes(
                 &fragment_file_paths.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
                 &fragment_file_to_cell_barcode,
                 &chromosomes.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
-                &mut gz_output_file
+                &mut buffered_writer
             )
         });
         handles.push(handle);
