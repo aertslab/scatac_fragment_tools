@@ -210,8 +210,9 @@ fn split_fragments_by_cell_barcodes(
     for chromosome in chromosomes {
 
         // Open fragment files which are gzipped, and pos-sorted.
+        let mut file_index = 0;
         let mut readers: Vec<FragmentFileReader> = Vec::new();
-        for (file_index, fragment_file_path) in fragment_file_paths.iter().enumerate() {
+        for fragment_file_path in fragment_file_paths.iter() {
             if let Some(cell_barcodes) = fragment_file_to_cell_barcode.get(&fragment_file_path.to_string()) {
                 readers.push(
                     FragmentFileReader::new(
@@ -220,6 +221,7 @@ fn split_fragments_by_cell_barcodes(
                         chromosome.to_string(),
                         file_index)?
                 );
+                file_index += 1;
             }
         }
 
