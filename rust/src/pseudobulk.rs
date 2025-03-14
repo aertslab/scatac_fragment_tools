@@ -265,7 +265,6 @@ pub fn split_fragment_files_by_cell_type(
     chromosomes: Vec<String>
 ) -> PyResult<()> {
     for cell_type in cell_type_to_fragment_file_to_cell_barcode.keys() {
-        let mut handles: Vec<thread::JoinHandle<_>> = Vec::new();
         for chromosome in &chromosomes {
             let output_file_name = format!("{}/{}.{}.fragments.tsv.gz", temp_directory, cell_type, chromosome);
             let fragment_file_paths = fragment_file_paths.clone(); // Need to clone since threads take ownership
@@ -275,19 +274,13 @@ pub fn split_fragment_files_by_cell_type(
                 .clone();
             let file = File::create(output_file_name)?;
             let chromosome = chromosome.clone();
-            let handle = thread::spawn(move || {
-                let mut gz_output_file = bgzf::Writer::new(file);
-                split_fragments_by_cell_barcodes_for_chromosome(
-                    &fragment_file_paths.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
-                    &fragment_file_to_cell_barcode,
-                    &chromosome,
-                    &mut gz_output_file
-                )
-            });
-            handles.push(handle);
-        }
-        for handle in handles {
-            handle.join().expect("Thread panicked")?;
+            let mut gz_output_file = bgzf::Writer::new(file);
+            split_fragments_by_cell_barcodes_for_chromosome(
+                &fragment_file_paths.iter().map(|p| p.as_str()).collect::<Vec<_>>(),
+                &fragment_file_to_cell_barcode,
+                &chromosome,
+                &mut gz_output_file
+            )?;
         }
         // concat all chromosomes
         let output_file_name = format!("{}/{}.fragments.tsv.gz", output_directory, cell_type);
