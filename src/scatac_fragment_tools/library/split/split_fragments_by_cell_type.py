@@ -23,6 +23,7 @@ def split_fragment_files_by_cell_type(
     n_cpu: int = 1,
     verbose: bool = False,
     clear_temp_folder: bool = False,
+    add_sample_id: bool = False
 ):
     """
     Split fragment files by cell type.
@@ -47,6 +48,8 @@ def split_fragment_files_by_cell_type(
         Whether to print progress. The default is False.
     clear_temp_folder : bool, optional
         Whether to clear the temporary folder. The default is False.
+    add_sample_id: bool, optional
+        Whether or not to prefix the cell barcode with the sample id.
     """
     # Check whether the same samples were provided in sample_to_fragment_file and
     # sample_to_cell_type_to_cell_barcodes.
@@ -83,6 +86,7 @@ def split_fragment_files_by_cell_type(
             cell_type_to_cell_barcodes=sample_to_cell_type_to_cell_barcodes[sample],
             chromsizes=chromsizes,
             verbose=verbose,
+            cb_prefix=f"{sample}_" if add_sample_id else ""
         )
         for sample in sample_to_cell_type_to_cell_barcodes
     )
