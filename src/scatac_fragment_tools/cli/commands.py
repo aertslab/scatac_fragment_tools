@@ -82,6 +82,8 @@ def command_split_fragments_by_cell_type(args):
         Column name for the cell type
     args.cell_barcode_column_name: str
         Column name for the cell barcode
+    args.add_sample_id: bool
+        Flag specifying wether or not to prefix the cell barcode with the sample id.
     """
     # Check arguments before doing anything else.
     import os
@@ -192,4 +194,5 @@ def command_split_fragments_by_cell_type(args):
         n_cpu=args.n_cpu,
         verbose=args.verbose,
         clear_temp_folder=args.clear_temp_folder,
+        add_sample_id=args.add_sample_id
     )

@@ -15,6 +15,7 @@ use std::collections::HashMap;
 /// * `cell_type_to_cell_barcodes` - A HashMap mapping cell types to cell barcodes.
 /// * `chromsizes` - A HashMap mapping chromosome names to chromosome sizes.
 /// * `verbose` - Whether to print progress messages.
+/// * `cb_prefix` - Prefix added to each cell barcode
 ///
 /// # Example
 ///
@@ -42,6 +43,7 @@ fn split_fragments_by_cell_barcode(
     cell_type_to_cell_barcodes: HashMap<String, Vec<String>>,
     chromsizes: HashMap<String, u64>,
     verbose: bool,
+    cb_prefix: String
 ) -> PyResult<()> {
     // Invert cell_type_to_cell_barcodes
     let mut cell_barcode_to_cell_type: HashMap<String, Vec<String>> = HashMap::new();
@@ -60,6 +62,7 @@ fn split_fragments_by_cell_barcode(
         chromsizes,
         5,
         verbose,
+        cb_prefix
     );
     Ok(())
 }

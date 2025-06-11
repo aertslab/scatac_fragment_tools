@@ -3,6 +3,7 @@ use rust_htslib::bgzf::Writer;
 use rust_htslib::tbx::{self, Read as TbxRead};
 use rust_htslib::tpool::ThreadPool;
 use std::collections::HashMap;
+use std::default;
 /// Splits a tabix-index fragment file into multiple files based on cell type.
 use std::io::Write;
 
@@ -67,6 +68,17 @@ fn sanitize_string_for_filename(s: String) -> String {
     s.replace([' ', '/'], "_")
 }
 
+fn read_to_array(read_bytes: &[u8], a: &mut [String; 5]) {
+    let read_as_str = String::from_utf8(read_bytes.to_vec())
+                        .expect("Invalid UTF-8 sequence when parsing line");
+    for (i, s) in read_as_str.split("\t").enumerate() {
+        if i > (a.len() - 1) {
+            panic!("Fragment contains more than 5 columns: {}", read_as_str);
+        }
+        a[i] = s.to_string();
+    }
+}
+
 /// Splits a tabix-index fragment file into multiple files based on cell type.
 ///
 /// # Arguments
@@ -79,6 +91,7 @@ fn sanitize_string_for_filename(s: String) -> String {
 /// * `chromsizes` - A HashMap mapping contig names to contig sizes.
 /// * `number_of_threads` - Number of threads to use for writing.
 /// * `verbose` - Whether to print progress messages.
+/// * `cb_prefix` - Prefix added to each cell barcode
 
 pub fn split_fragments_by_cell_barcode(
     path_to_fragments: &String,
@@ -87,6 +100,7 @@ pub fn split_fragments_by_cell_barcode(
     chromsizes: HashMap<String, u64>,
     number_of_threads: u32,
     verbose: bool,
+    cb_prefix: String
 ) {
     // Initialize reader
     let mut tbx_reader = tbx::Reader::from_path(path_to_fragments)
@@ -148,15 +162,17 @@ pub fn split_fragments_by_cell_barcode(
         let mut not_at_end = tbx_reader
             .read(&mut read)
             .unwrap_or_else(|_| panic!("Could not read from fragments file"));
-        let mut read_as_str = String::from_utf8(read.clone()).unwrap();
-
+        let mut read_a: [String; 5] = Default::default();
+        read_to_array(read.as_slice(), &mut read_a);
         // loop over reads
         while not_at_end {
-            let read_cb = read_as_str.split('\t').nth(3).unwrap().to_string();
-            if let Some(cell_types) = cell_barcode_to_cell_type.get(&read_cb) {
+            let read_cb = read_a[3].as_str();
+            if let Some(cell_types) = cell_barcode_to_cell_type.get(read_cb) {
+                // add sample id prefix to cell barcode
+                read_a[3].insert_str(0, &cb_prefix);
                 for cell_type in cell_types {
                     let writer = cell_type_to_writer.get_mut(cell_type).unwrap();
-                    writer.write_all(&read).unwrap_or_else(|_| {
+                    writer.write_all(&read_a.join("\t").as_bytes()).unwrap_or_else(|_| {
                         panic!(
                             "Could not write contig \"{}\" to \"{}\" fragments file",
                             contig, &writer.path
@@ -172,7 +188,7 @@ pub fn split_fragments_by_cell_barcode(
             }
             read.clear();
             not_at_end = tbx_reader.read(&mut read).unwrap();
-            read_as_str = String::from_utf8(read.clone()).unwrap();
+            read_to_array(read.as_slice(), &mut read_a);
         }
 
         // flush buffers
