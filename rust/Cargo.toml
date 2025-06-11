@@ -1,6 +1,6 @@
 [package]
 name = "_rust_scatac_fragment_tools"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Seppe De Winter <seppe.dewinter@kuleuven.be>", "Gert Hulselmans <gert.hulselmans@kuleuven.be>"]
 edition = "2021"
 
