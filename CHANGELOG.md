@@ -10,6 +10,14 @@
 - **[3567a26](https://github.com/aertslab/scatac_fragment_tools/commit/3567a2632ba67a50730f5a83408cebbcc80c3a37)** : Don't panic when > 5 cols in fragment file.
 - **[11c9e8f](https://github.com/aertslab/scatac_fragment_tools/commit/11c9e8ff6741a875a895f44cf116cde8099ee378)**: Update test code for newer polars version.
 
+
+## v0.1.3
+
+### Fixed
+
+- **[f3603f02](https://github.com/aertslab/scatac_fragment_tools/commit/f3603f021a904a64b640e0c983366cb0e96a9c60)**: Throw error if `scatac_from_fragments split` can't write to fragments files, by updating rust_htslib as both `rust_htslib::bgzf:Reader` and`rust_htslib::bgzf:Writer` did not check if it could open a file successfully. Before this would silently fail later when trying to read those "written" files.
+
+
 ## v0.1.2
 
 ### Updated
