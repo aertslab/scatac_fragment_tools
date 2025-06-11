@@ -84,7 +84,8 @@ def split_command_test_helper(tmp_path, file_dict):
         cell_type = row[0]
         cell_type_bcs = cell_annotations \
             .filter(pl.col("cell_type") == cell_type) \
-            .select(pl.col("cell_barcode"))
+            .get_column("cell_barcode") \
+            .to_list()
         fragments_cell_type = pl.concat(
             [
                 a_fragments.filter(pl.col("column_4").is_in(cell_type_bcs)),
@@ -155,7 +156,8 @@ def split_command_test_helper_w_sample_id(tmp_path, file_dict):
             .iter_rows():
         cell_type_bcs = cell_annotations \
             .filter(pl.col("cell_type") == cell_type) \
-            .select(pl.col("cell_barcode"))
+            .get_column("cell_barcode") \
+            .to_list()
         fragments_cell_type = pl.concat(
             [
                 a_fragments.filter(
