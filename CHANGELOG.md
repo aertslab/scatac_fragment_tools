@@ -4,10 +4,11 @@
 
 ### Updated
 - **[9e2ffaf](https://github.com/aertslab/scatac_fragment_tools/commit/9e2ffaf00d8cfe9148b7ae42603a96ab083d9f03)**: Add option to prefix cell barcode with sample id.
+- **[5ddbda9](https://github.com/aertslab/scatac_fragment_tools/commit/5ddbda91a48cc7c4daec3b4d53b5dcf085bd179c)**: More memory efficient sorting of written out fragment files.
 
 ### Fixed
 
-- **[3567a26](https://github.com/aertslab/scatac_fragment_tools/commit/3567a2632ba67a50730f5a83408cebbcc80c3a37)** : Don't panic when > 5 cols in fragment file.
+- **[3567a26](https://github.com/aertslab/scatac_fragment_tools/commit/3567a2632ba67a50730f5a83408cebbcc80c3a37)**: Don't panic when > 5 cols in fragment file.
 - **[11c9e8f](https://github.com/aertslab/scatac_fragment_tools/commit/11c9e8ff6741a875a895f44cf116cde8099ee378)**: Update test code for newer polars version.
 
 
