@@ -1,9 +1,12 @@
 use bgzip::BGZFReader;
 use core::fmt;
+use std::io::BufRead;
 use rust_htslib::bgzf::Writer;
 use rust_htslib::tpool::ThreadPool;
 use std::fs::File;
-use std::collections::{HashMap, VecDeque};
+use std::collections::BinaryHeap;
+use std::cmp::Reverse;
+
 /// Aggregates multiple fragment files into a single file
 /// This code is just a fancy implementation of the unix command `cat | sort -k1,1 -k2,2n -k3,3n | bgzip`
 /// And might not be super efficient.
@@ -165,71 +168,56 @@ pub fn merge_fragment_files(
         .set_thread_pool(&tpool)
         .unwrap_or_else(|_| panic!("Could not set thread pool for file {}", path_to_output_file));
 
-    let sample_keys: Vec<&str> = path_to_fragment_files
+    let mut readers: Vec<(String, BGZFReader<File>)> = path_to_fragment_files
         .iter()
-        .map(|x| x.as_str())
+        .map(|path| {
+            let f = File::open(path)
+                .unwrap_or_else(|_| panic!("Could not open file {}", path));
+            let reader = BGZFReader::new(f)
+                .unwrap_or_else(|_| panic!("Could not create BGZF reader for file {}", path));
+            (path.clone(), reader)
+        })
         .collect();
 
-    // initialize buffer per sample
-    let mut buffer_per_sample: HashMap<&str, String> = sample_keys
-        .iter()
-        .map(|k| (*k, String::new()))
-        .collect();
+    // Use a min-heap to keep track of the next fragment from each file
+    // The heap will store (Reverse(Fragment), index_of_file)
+    let mut heap = BinaryHeap::new();
 
-    // read all files into buffer
-    for (path_to_fragment_file, mut buffer) in &mut buffer_per_sample {
-        log(&format!("Reading file {}", path_to_fragment_file), verbose);
-        read_fragments_file(path_to_fragment_file, &mut buffer);
-    }
-
-    // initialize queue of fragments per sample
-    let mut fragments_per_sample: HashMap<&str, VecDeque<Fragment>> = buffer_per_sample
-        .iter()
-        .map(
-            |(sample, buffer)|
-            (
-                *sample, 
-                buffer
-                    .split('\n')
-                    .filter(|s| !s.is_empty())
-                    .map(Fragment::new_from_string)
-                    .collect()
-            )
-        )
-        .collect();
-
-    loop {
-        let mut min_sample: Option<&str> = None;
-        let mut min_fragment: Option<&Fragment> = None;
-
-        for (&sample, queue) in fragments_per_sample.iter() {
-            if let Some(fragment) = queue.front() {
-                let is_smaller = match min_fragment {
-                    Some(current_min) => fragment < current_min,
-                    None => true,
-                };
-                if is_smaller {
-                    min_fragment = Some(fragment);
-                    min_sample = Some(sample);
-                }
+    for i in 0..readers.len() {
+        let (_, reader) = &mut readers[i];
+        // Read the first line from each file
+        let mut line_buffer = String::new();
+        if let Ok(bytes_read) = reader.read_line(&mut line_buffer) {
+            if bytes_read > 0 {
+                let fragment = Fragment::new_from_string(line_buffer.trim());
+                heap.push(Reverse((fragment, i)));
             }
         }
+    }
 
-        let sample = match min_sample {
-            Some(s) => s,
-            None => break, // we are done
+    loop {
+        // Get the smallest fragment from the heap
+        let Reverse((min_fragment, file_idx)) = match heap.pop() {
+            Some(f) => f,
+            None => break, // All files are exhausted
         };
 
-        if let Some(queue) = fragments_per_sample.get_mut(sample) {
-            if let Some(fragment) = queue.pop_front() {
-                writer.write_all(fragment.to_string().as_bytes())
-                    .expect(&format!("Could not write fragment, {}", fragment.to_string()));
-                writer.write_all(b"\n")
-                    .expect(&format!("Could not write fragment, {}", fragment.to_string()));
+        // Write the smallest fragment
+        writer.write_all(min_fragment.to_string().as_bytes()).unwrap();
+        writer.write_all(b"\n").unwrap();
+
+        // Read the next fragment from the file that `min_fragment` came from
+        let (_, reader) = &mut readers[file_idx];
+        let mut line_buffer = String::new();
+        if let Ok(bytes_read) = reader.read_line(&mut line_buffer) {
+            if bytes_read > 0 {
+                let next_fragment = Fragment::new_from_string(line_buffer.trim());
+                heap.push(Reverse((next_fragment, file_idx)));
             }
         }
     }
     writer.flush().unwrap();
+    
 }
 
 fn log(message: &str, verbose: bool) {
