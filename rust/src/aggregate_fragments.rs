@@ -1,7 +1,7 @@
 use bgzip::BGZFReader;
+use core::fmt;
 use rust_htslib::bgzf::Writer;
 use rust_htslib::tpool::ThreadPool;
-use core::fmt;
 use std::fs::File;
 /// Aggregates multiple fragment files into a single file
 /// This code is just a fancy implementation of the unix command `cat | sort -k1,1 -k2,2n -k3,3n | bgzip`
@@ -77,7 +77,13 @@ impl Fragment {
                 cell_barcode: fields[3].to_string(),
                 score: Some(fields[4].parse::<usize>().unwrap()),
             },
-            _ => panic!("Invalid number of fields in fragment file!"),
+            _ => Fragment {
+                chrom: fields[0].to_string(),
+                start: fields[1].parse::<usize>().unwrap(),
+                end: fields[2].parse::<usize>().unwrap(),
+                cell_barcode: fields[3].to_string(),
+                score: Some(fields[4].parse::<usize>().unwrap()),
+            },
         }
     }
 }
