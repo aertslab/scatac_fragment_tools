@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Dict
-
 
 def command_fragment_to_bigwigs(args):
     import os
@@ -84,6 +82,7 @@ def command_split_fragments_by_cell_type(args):
         Column name for the cell barcode
     args.add_sample_id: bool
         Flag specifying wether or not to prefix the cell barcode with the sample id.
+
     """
     # Check arguments before doing anything else.
     import os
@@ -130,7 +129,7 @@ def command_split_fragments_by_cell_type(args):
 
     # Read sample to fragment file definition
     # and create a dictionary mapping sample names to fragment files.
-    sample_to_fragment_file: Dict[str, str] = {}
+    sample_to_fragment_file: dict[str, str] = {}
     d_sample_to_fragment_definition = pl.read_csv(
         args.path_to_sample_to_fragment_definition,
         separator=args.separator,
@@ -145,9 +144,9 @@ def command_split_fragments_by_cell_type(args):
             )
         sample_to_fragment_file[sample] = fragment_file_path
 
-    # Read cell type to cell barcode definition
-    # and create a dictionary mapping sample names to cell type to list of cell barcodes.
-    sample_to_cell_type_to_cell_barcodes: Dict[str, Dict[str, list]] = {}
+    # Read cell type to cell barcode definition and
+    # create a dictionary mapping sample names to cell type to list of cell barcodes.
+    sample_to_cell_type_to_cell_barcodes: dict[str, dict[str, list]] = {}
     d_cell_type_to_cell_barcode_definition = (
         pl.scan_csv(
             args.path_to_cell_type_to_cell_barcode_definition, separator=args.separator
@@ -172,7 +171,7 @@ def command_split_fragments_by_cell_type(args):
 
     # Read chromosome sizes
     # and create a dictionary mapping chromosome names to chromosome sizes.
-    chromsizes: Dict[str, int] = {}
+    chromsizes: dict[str, int] = {}
     pl_chromsizes = pl.read_csv(
         args.chrom_sizes_filename,
         separator="\t",

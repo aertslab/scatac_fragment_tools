@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable
 
 from rich_argparse import RichHelpFormatter
 
@@ -32,7 +32,7 @@ class SubparserBuilder:
         self,
         name: str,
         subparsers: argparse._SubParsersAction,
-        func: Optional[Callable] = None,
+        func: Callable | None = None,
         **kwargs,
     ):
         self.name = name
@@ -65,13 +65,13 @@ class SubparserBuilder:
             **kwargs,
         )
 
-    def get_parser(self) -> Dict[str, argparse.ArgumentParser]:
+    def get_parser(self) -> dict[str, argparse.ArgumentParser]:
         return {self.name: self.parser}
 
 
 def add_fragments_to_bigwig_subparser(
     subparsers: argparse._SubParsersAction,
-) -> Dict[str, argparse.ArgumentParser]:
+) -> dict[str, argparse.ArgumentParser]:
     parser = SubparserBuilder(
         name="bigwig",
         subparsers=subparsers,
@@ -160,7 +160,7 @@ def add_fragments_to_bigwig_subparser(
 
 def add_split_fragments_by_cell_type_subparser(
     subparsers: argparse._SubParsersAction,
-) -> Dict[str, argparse.ArgumentParser]:
+) -> dict[str, argparse.ArgumentParser]:
     parser = SubparserBuilder(
         name="split",
         subparsers=subparsers,

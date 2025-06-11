@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from typing import Dict, List
 
 import joblib
 
@@ -15,11 +14,11 @@ def _santize_string_for_filename(s: str) -> str:
 
 
 def split_fragment_files_by_cell_type(
-    sample_to_fragment_file: Dict[str, str],
+    sample_to_fragment_file: dict[str, str],
     path_to_temp_folder: str,
     path_to_output_folder: str,
-    sample_to_cell_type_to_cell_barcodes: Dict[str, Dict[str, list]],
-    chromsizes: Dict[str, int],
+    sample_to_cell_type_to_cell_barcodes: dict[str, dict[str, list]],
+    chromsizes: dict[str, int],
     n_cpu: int = 1,
     verbose: bool = False,
     clear_temp_folder: bool = False,
@@ -50,6 +49,7 @@ def split_fragment_files_by_cell_type(
         Whether to clear the temporary folder. The default is False.
     add_sample_id: bool, optional
         Whether or not to prefix the cell barcode with the sample id.
+
     """
     # Check whether the same samples were provided in sample_to_fragment_file and
     # sample_to_cell_type_to_cell_barcodes.
@@ -93,7 +93,7 @@ def split_fragment_files_by_cell_type(
 
     # Check whether all files were create successfully and
     # create a dictionary mapping cell types to fragment files.
-    cell_type_to_fragment_files: Dict[str, List[str]] = {}
+    cell_type_to_fragment_files: dict[str, list[str]] = {}
     for sample in sample_to_cell_type_to_cell_barcodes:
         for cell_type in sample_to_cell_type_to_cell_barcodes[sample]:
             cell_type_sanitized = _santize_string_for_filename(cell_type)

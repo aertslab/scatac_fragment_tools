@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import gzip
 import os
-from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numba
 import numpy as np
 import polars as pl
 import pyarrow as pa
 import pyarrow.csv
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def get_chromosome_sizes(chrom_sizes_filename: str):
