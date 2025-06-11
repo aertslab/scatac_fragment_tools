@@ -124,7 +124,7 @@ def read_bed_to_polars_df(
 
     # Enable global string cache so categorical columns from multiple Polars DataFrames
     # can be joined later, if necessary.
-    pl.enable_string_cache(True)
+    pl.enable_string_cache()
 
     if engine == "polars":
         # Read BED file with Polars.
@@ -135,7 +135,7 @@ def read_bed_to_polars_df(
             separator="\t",
             use_pyarrow=False,
             new_columns=bed_column_names[:column_count],
-            dtypes={
+            schema_overrides={
                 bed_column: dtype
                 for bed_column, dtype in {
                     "Chromosome": pl.Categorical,
@@ -232,9 +232,9 @@ def read_fragments_to_polars_df(
         "Score" not in fragments_df_pl.columns
         or fragments_df_pl.schema["Score"] == pl.Utf8
     ):
-        fragments_df_pl = fragments_df_pl.groupby(
+        fragments_df_pl = fragments_df_pl.group_by(
             ["Chromosome", "Start", "End", "Name"]
-        ).agg(pl.count().cast(pl.Int32()).alias("Score"))
+        ).agg(pl.len().cast(pl.Int32()).alias("Score"))
     else:
         fragments_df_pl = fragments_df_pl.with_columns(pl.col("Score").cast(pl.Int32()))
 
@@ -346,7 +346,13 @@ def fragments_to_coverage(
         print(f"Number of fragments: {fragments_df.height}")
         print("Split fragments df by chromosome")
 
-    per_chrom_fragments_dfs = fragments_df.partition_by("Chromosome", as_dict=True)
+    per_chrom_fragments_dfs = {
+        str(chrom): fragments_chrom_df_pl
+        for (chrom,), fragments_chrom_df_pl in fragments_df.partition_by(
+            ["Chromosome"],
+            as_dict=True,
+        ).items()
+    }
 
     if verbose:
         print("Calculate depth per chromosome:")
@@ -455,6 +461,7 @@ def fragments_to_bw_with_pybigwig(
             normalize=normalize,
             scaling_factor=scaling_factor,
             cut_sites=cut_sites,
+            verbose=verbose,
         )
 
         for chroms, starts, ends, values in fragments_to_coverage_chrom_iter:
@@ -505,6 +512,7 @@ def fragments_to_bw_with_pybigtools(
         normalize=normalize,
         scaling_factor=scaling_factor,
         cut_sites=cut_sites,
+        verbose=verbose,
     )
 
     def chrom_start_end_value_iter() -> tuple[str, int, int, float]:

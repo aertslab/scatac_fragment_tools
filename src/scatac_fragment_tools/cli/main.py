@@ -29,43 +29,54 @@ class SubparserBuilder:
     """
 
     def __init__(
-            self,
-            name: str,
-            subparsers: argparse._SubParsersAction,
-            func: Optional[Callable] = None,
-            **kwargs):
+        self,
+        name: str,
+        subparsers: argparse._SubParsersAction,
+        func: Optional[Callable] = None,
+        **kwargs,
+    ):
         self.name = name
         self.parser: argparse.ArgumentParser = subparsers.add_parser(
             name=name,
             formatter_class=_FORMATTER_CLASS,
-            **kwargs
+            **kwargs,
         )
         self.parser.set_defaults(func=func)
-        self.required_arguments = self.parser.add_argument_group(_REQUIRED_ARGUMENTS_NAME)
-        self.optional_arguments = self.parser.add_argument_group(_OPTIONAL_ARGUMENTS_NAME)
+        self.required_arguments = self.parser.add_argument_group(
+            _REQUIRED_ARGUMENTS_NAME
+        )
+        self.optional_arguments = self.parser.add_argument_group(
+            _OPTIONAL_ARGUMENTS_NAME
+        )
+
     def add_required_argument(self, *args, **kwargs):
         self.required_arguments.add_argument(
             *args,
-            required = True,
-            **kwargs)
+            required=True,
+            **kwargs,
+        )
+
     def add_optional_argument(self, *args, default: Any, help: str = "", **kwargs):
         self.optional_arguments.add_argument(
             *args,
-            required = False,
-            help = f"{help} Default: {default}",
-            default = default,
-            **kwargs)
+            required=False,
+            help=f"{help} Default: {default}",
+            default=default,
+            **kwargs,
+        )
+
     def get_parser(self) -> Dict[str, argparse.ArgumentParser]:
         return {self.name: self.parser}
+
 
 def add_fragments_to_bigwig_subparser(
     subparsers: argparse._SubParsersAction,
 ) -> Dict[str, argparse.ArgumentParser]:
     parser = SubparserBuilder(
-        name = "bigwig",
-        subparsers = subparsers,
-        func = command_fragment_to_bigwigs,
-        description = "Calculate genome coverage for fragments and write result to bigWig file."
+        name="bigwig",
+        subparsers=subparsers,
+        func=command_fragment_to_bigwigs,
+        description="Calculate genome coverage for fragments and write result to bigWig file.",
     )
     parser.add_required_argument(
         "-c",
@@ -139,10 +150,10 @@ def add_fragments_to_bigwig_subparser(
     parser.add_optional_argument(
         "-v",
         "--verbose",
-        dest = "verbose",
-        action = "store_true",
-        default = False,
-        help = "Whether to print progress.",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="Whether to print progress.",
     )
     return parser.get_parser()
 
@@ -151,122 +162,123 @@ def add_split_fragments_by_cell_type_subparser(
     subparsers: argparse._SubParsersAction,
 ) -> Dict[str, argparse.ArgumentParser]:
     parser = SubparserBuilder(
-        name = "split",
-        subparsers = subparsers,
-        func = command_split_fragments_by_cell_type,
-        description = "Split fragment files by cell type."
+        name="split",
+        subparsers=subparsers,
+        func=command_split_fragments_by_cell_type,
+        description="Split fragment files by cell type.",
     )
     parser.add_required_argument(
         "-f",
         "--sample_fragments",
-        dest = "path_to_sample_to_fragment_definition",
-        action = "store",
-        type = str,
-        help = "Path to a text file mapping sample names to fragment files.",
+        dest="path_to_sample_to_fragment_definition",
+        action="store",
+        type=str,
+        help="Path to a text file mapping sample names to fragment files.",
     )
     parser.add_required_argument(
         "-b",
         "--cell_type_barcodes",
-        dest = "path_to_cell_type_to_cell_barcode_definition",
-        action = "store",
-        type = str,
-        help = "Path to a text file mapping samples to cell types and cell types to cell barcodes.",
+        dest="path_to_cell_type_to_cell_barcode_definition",
+        action="store",
+        type=str,
+        help="Path to a text file mapping samples to cell types and cell types to cell barcodes.",
     )
     parser.add_required_argument(
         "-c",
         "--chrom",
-        dest = "chrom_sizes_filename",
-        action = "store",
-        type = str,
-        help = "Filename with chromosome sizes (*.chrom.sizes, *.fa.fai).",
+        dest="chrom_sizes_filename",
+        action="store",
+        type=str,
+        help="Filename with chromosome sizes (*.chrom.sizes, *.fa.fai).",
     )
     parser.add_required_argument(
         "-o",
         "--output",
-        dest = "path_to_output_folder",
-        action = "store",
-        type = str,
-        help = "Path to output folder.",
+        dest="path_to_output_folder",
+        action="store",
+        type=str,
+        help="Path to output folder.",
     )
     parser.add_optional_argument(
         "-t",
         "--temp",
-        dest = "path_to_temp_folder",
-        action = "store",
-        type = str,
-        default = "/tmp",
-        help = "Path to temporary folder.",
+        dest="path_to_temp_folder",
+        action="store",
+        type=str,
+        default="/tmp",
+        help="Path to temporary folder.",
     )
     parser.add_optional_argument(
         "-n",
         "--n_cpu",
-        dest = "n_cpu",
-        action = "store",
-        type = int,
-        default = 1,
-        help = "Number of cores to use.",
+        dest="n_cpu",
+        action="store",
+        type=int,
+        default=1,
+        help="Number of cores to use.",
     )
     parser.add_optional_argument(
         "-v",
         "--verbose",
-        dest = "verbose",
-        action = "store_true",
-        default = False,
-        help = "Whether to print progress.",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="Whether to print progress.",
     )
     parser.add_optional_argument(
         "--clear_temp",
-        dest = "clear_temp_folder",
-        action = "store_true",
-        default = False,
-        help = "Whether to clear the temporary folder.",
+        dest="clear_temp_folder",
+        action="store_true",
+        default=False,
+        help="Whether to clear the temporary folder.",
     )
     parser.add_optional_argument(
         "-s",
         "--sep",
-        dest = "separator",
-        action = "store",
-        type = str,
-        default = "\t",
-        help = "Separator for text files.",
+        dest="separator",
+        action="store",
+        type=str,
+        default="\t",
+        help="Separator for text files.",
     )
     parser.add_optional_argument(
         "--sample_column",
-        dest = "sample_column_name",
-        action = "store",
-        type = str,
-        default = "sample",
-        help = "Column name for the sample name",
+        dest="sample_column_name",
+        action="store",
+        type=str,
+        default="sample",
+        help="Column name for the sample name",
     )
     parser.add_optional_argument(
         "--fragment_column",
-        dest = "path_to_fragment_file_column_name",
-        action = "store",
-        type = str,
-        default = "path_to_fragment_file",
-        help = "Column name for the path to the fragment file",
+        dest="path_to_fragment_file_column_name",
+        action="store",
+        type=str,
+        default="path_to_fragment_file",
+        help="Column name for the path to the fragment file",
     )
     parser.add_optional_argument(
         "--cell_type_column",
-        dest = "cell_type_column_name",
-        action = "store",
-        type = str,
-        default = "cell_type",
-        help = "Column name for the cell type",
+        dest="cell_type_column_name",
+        action="store",
+        type=str,
+        default="cell_type",
+        help="Column name for the cell type",
     )
     parser.add_optional_argument(
         "--cell_barcode_column",
-        dest = "cell_barcode_column_name",
-        action = "store",
-        type = str,
-        default = "cell_barcode",
-        help = "Column name for the cell barcode",
+        dest="cell_barcode_column_name",
+        action="store",
+        type=str,
+        default="cell_barcode",
+        help="Column name for the cell barcode",
     )
     return parser.get_parser()
 
+
 _PARSERS_CREATOR_FUNCS = [
     add_fragments_to_bigwig_subparser,
-    add_split_fragments_by_cell_type_subparser
+    add_split_fragments_by_cell_type_subparser,
 ]
 
 

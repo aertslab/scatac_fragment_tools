@@ -14,7 +14,7 @@ def command_fragment_to_bigwigs(args):
     if not os.path.exists(args.fragments_filename):
         raise FileNotFoundError(f"Fragments file not found: {args.fragments_filename}")
 
-    # import inside function to avoid unnecessary imports when calling other commands.
+    # Import inside function to avoid unnecessary imports when calling other commands.
     import polars as pl
 
     from scatac_fragment_tools.library.bigwig.fragments_to_bigwig import (
@@ -43,6 +43,7 @@ def command_fragment_to_bigwigs(args):
         args.bigwig_writer,
         args.verbose,
     )
+
 
 def command_split_fragments_by_cell_type(args):
     """
@@ -84,6 +85,7 @@ def command_split_fragments_by_cell_type(args):
     """
     # Check arguments before doing anything else.
     import os
+
     if not os.path.exists(args.path_to_sample_to_fragment_definition):
         raise FileNotFoundError(
             f"Sample to fragment definition file not found: {args.path_to_sample_to_fragment_definition}"
@@ -129,32 +131,41 @@ def command_split_fragments_by_cell_type(args):
     sample_to_fragment_file: Dict[str, str] = {}
     d_sample_to_fragment_definition = pl.read_csv(
         args.path_to_sample_to_fragment_definition,
-        separator=args.separator).to_dict()
+        separator=args.separator,
+    ).to_dict()
     for sample, fragment_file_path in zip(
         d_sample_to_fragment_definition[args.sample_column_name],
-        d_sample_to_fragment_definition[args.path_to_fragment_file_column_name]):
+        d_sample_to_fragment_definition[args.path_to_fragment_file_column_name],
+    ):
         if sample in sample_to_fragment_file:
-            raise ValueError(f"Duplicate sample name: {sample} in {args.path_to_sample_to_fragment_definition}")
+            raise ValueError(
+                f"Duplicate sample name: {sample} in {args.path_to_sample_to_fragment_definition}"
+            )
         sample_to_fragment_file[sample] = fragment_file_path
 
     # Read cell type to cell barcode definition
     # and create a dictionary mapping sample names to cell type to list of cell barcodes.
     sample_to_cell_type_to_cell_barcodes: Dict[str, Dict[str, list]] = {}
-    d_cell_type_to_cell_barcode_definition = pl.scan_csv(
-        args.path_to_cell_type_to_cell_barcode_definition,
-        separator=args.separator) \
-        .groupby([args.sample_column_name, args.cell_type_column_name]) \
-        .agg(pl.col(args.cell_barcode_column_name)) \
-        .collect() \
+    d_cell_type_to_cell_barcode_definition = (
+        pl.scan_csv(
+            args.path_to_cell_type_to_cell_barcode_definition, separator=args.separator
+        )
+        .group_by([args.sample_column_name, args.cell_type_column_name])
+        .agg(pl.col(args.cell_barcode_column_name))
+        .collect()
         .to_dict()
+    )
     for sample, cell_type, cell_barcodes in zip(
         d_cell_type_to_cell_barcode_definition[args.sample_column_name],
         d_cell_type_to_cell_barcode_definition[args.cell_type_column_name],
-        d_cell_type_to_cell_barcode_definition[args.cell_barcode_column_name]):
+        d_cell_type_to_cell_barcode_definition[args.cell_barcode_column_name],
+    ):
         if sample not in sample_to_cell_type_to_cell_barcodes:
             sample_to_cell_type_to_cell_barcodes[sample] = {}
         if cell_type in sample_to_cell_type_to_cell_barcodes[sample]:
-            raise ValueError(f"Duplicates in {args.path_to_cell_type_to_cell_barcode_definition}, for sample {sample} and cell type {cell_type}")
+            raise ValueError(
+                f"Duplicates in {args.path_to_cell_type_to_cell_barcode_definition}, for sample {sample} and cell type {cell_type}"
+            )
         sample_to_cell_type_to_cell_barcodes[sample][cell_type] = cell_barcodes
 
     # Read chromosome sizes
@@ -163,19 +174,22 @@ def command_split_fragments_by_cell_type(args):
     pl_chromsizes = pl.read_csv(
         args.chrom_sizes_filename,
         separator="\t",
-        has_header=False)
+        has_header=False,
+    )
     for chromosome, size in pl_chromsizes.iter_rows():
         if chromosome in chromsizes:
-            raise ValueError(f"Duplicates in {args.chrom_sizes_filename}, for chromosome {chromosome}")
+            raise ValueError(
+                f"Duplicates in {args.chrom_sizes_filename}, for chromosome {chromosome}"
+            )
         chromsizes[chromosome] = size
 
     split_fragment_files_by_cell_type(
-        sample_to_fragment_file = sample_to_fragment_file,
-        path_to_temp_folder = args.path_to_temp_folder,
-        path_to_output_folder = args.path_to_output_folder,
-        sample_to_cell_type_to_cell_barcodes = sample_to_cell_type_to_cell_barcodes,
-        chromsizes = chromsizes,
-        n_cpu = args.n_cpu,
-        verbose = args.verbose,
-        clear_temp_folder = args.clear_temp_folder
+        sample_to_fragment_file=sample_to_fragment_file,
+        path_to_temp_folder=args.path_to_temp_folder,
+        path_to_output_folder=args.path_to_output_folder,
+        sample_to_cell_type_to_cell_barcodes=sample_to_cell_type_to_cell_barcodes,
+        chromsizes=chromsizes,
+        n_cpu=args.n_cpu,
+        verbose=args.verbose,
+        clear_temp_folder=args.clear_temp_folder,
     )

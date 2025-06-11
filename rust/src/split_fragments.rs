@@ -49,17 +49,17 @@ impl LazyBgzfWriter<'_> {
     /// # Arguments
     ///
     /// * `bytes` - The bytes to write.
-    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+    fn write_all(&mut self, bytes: &[u8]) -> std::io::Result<()> {
         self.written = true;
         if self.writer.is_none() {
             let mut writer = Writer::from_path(&self.path)
-                .unwrap_or_else(|_| panic!("Could not open file {} for writing", self.path));
+                .unwrap_or_else(|_| panic!("Could not open file \"{}\" for writing", self.path));
             writer
                 .set_thread_pool(self.tpool)
-                .unwrap_or_else(|_| panic!("Could not set thread pool {}", self.path));
+                .unwrap_or_else(|_| panic!("Could not set thread pool for \"{}\"", self.path));
             self.writer = Some(writer);
         }
-        self.writer.as_mut().unwrap().write(bytes)
+        self.writer.as_mut().unwrap().write_all(bytes)
     }
 }
 
@@ -90,7 +90,7 @@ pub fn split_fragments_by_cell_barcode(
 ) {
     // Initialize reader
     let mut tbx_reader = tbx::Reader::from_path(path_to_fragments)
-        .unwrap_or_else(|_| panic!("Could not open file {}", path_to_fragments));
+        .unwrap_or_else(|_| panic!("Could not open file \"{}\"", path_to_fragments));
 
     // Initialize writers
     // Use lazy writer to avoid generating empty files
@@ -125,25 +125,29 @@ pub fn split_fragments_by_cell_barcode(
         if !contigs_in_fragments_file.contains(contig) {
             log(
                 &format!(
-                    "Skipping contig {} because it is not in the fragments file",
+                    "Skipping contig \"{}\" because it is not in the fragments file",
                     contig
                 ),
                 verbose,
             );
             continue;
         }
-        log(&format!("Processing contig {}", contig), verbose);
+        log(&format!("Processing contig \"{}\"", contig), verbose);
         // get contig id and size and fetch whole contig
         let contig_id = tbx_reader
             .tid(contig)
-            .unwrap_or_else(|_| panic!("Could not get contig id for contig {}", contig));
+            .unwrap_or_else(|_| panic!("Could not get contig id for contig \"{}\"", contig));
         let contig_size = chromsizes.get(contig).unwrap();
         tbx_reader
             .fetch(contig_id, 0, *contig_size)
-            .unwrap_or_else(|_| panic!("Could not fetch contig {} from fragments file", contig));
+            .unwrap_or_else(|_| {
+                panic!("Could not fetch contig \"{}\" from fragments file", contig)
+            });
 
         // read first read of contig
-        let mut not_at_end = tbx_reader.read(&mut read).unwrap();
+        let mut not_at_end = tbx_reader
+            .read(&mut read)
+            .unwrap_or_else(|_| panic!("Could not read from fragments file"));
         let mut read_as_str = String::from_utf8(read.clone()).unwrap();
 
         // loop over reads
@@ -152,8 +156,18 @@ pub fn split_fragments_by_cell_barcode(
             if let Some(cell_types) = cell_barcode_to_cell_type.get(&read_cb) {
                 for cell_type in cell_types {
                     let writer = cell_type_to_writer.get_mut(cell_type).unwrap();
-                    writer.write(&read).unwrap();
-                    writer.write(b"\n").unwrap();
+                    writer.write_all(&read).unwrap_or_else(|_| {
+                        panic!(
+                            "Could not write contig \"{}\" to \"{}\" fragments file",
+                            contig, &writer.path
+                        )
+                    });
+                    writer.write_all(b"\n").unwrap_or_else(|_| {
+                        panic!(
+                            "Could not write contig \"{}\" to \"{}\" fragments file",
+                            contig, &writer.path
+                        )
+                    });
                 }
             }
             read.clear();
@@ -164,7 +178,19 @@ pub fn split_fragments_by_cell_barcode(
         // flush buffers
         for writer in cell_type_to_writer.values_mut() {
             if writer.written {
-                writer.writer.as_mut().unwrap().flush().unwrap();
+                log(
+                    &format!(
+                        "Flush reads for contig \"{}\" to \"{}\" fragments file",
+                        contig, writer.path
+                    ),
+                    verbose,
+                );
+                writer.writer.as_mut().unwrap().flush().unwrap_or_else(|_| {
+                    panic!(
+                        "Could not flush reads for contig \"{}\" to \"{}\" fragments file",
+                        contig, &writer.path
+                    )
+                });
             }
         }
     }
