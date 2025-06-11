@@ -3,6 +3,7 @@ use core::fmt;
 use rust_htslib::bgzf::Writer;
 use rust_htslib::tpool::ThreadPool;
 use std::fs::File;
+use std::collections::{HashMap, VecDeque};
 /// Aggregates multiple fragment files into a single file
 /// This code is just a fancy implementation of the unix command `cat | sort -k1,1 -k2,2n -k3,3n | bgzip`
 /// And might not be super efficient.
@@ -11,7 +12,7 @@ use std::fs::File;
 /// If someone wants and knows how to do that, please do!
 use std::io::{Read as IoRead, Write};
 
-fn read_fragments_file(file_name: &String, buffer: &mut String) {
+fn read_fragments_file(file_name: &str, buffer: &mut String) {
     let f = File::open(file_name).unwrap_or_else(|_| panic!("Could not open file {}", file_name));
     let mut reader = BGZFReader::new(f)
         .unwrap_or_else(|_| panic!("Could not create BGZF reader for file {}", file_name));
@@ -164,31 +165,69 @@ pub fn merge_fragment_files(
         .set_thread_pool(&tpool)
         .unwrap_or_else(|_| panic!("Could not set thread pool for file {}", path_to_output_file));
 
-    // initialize buffer
-    let mut buffer = String::new();
+    let sample_keys: Vec<&str> = path_to_fragment_files
+        .iter()
+        .map(|x| x.as_str())
+        .collect();
+
+    // initialize buffer per sample
+    let mut buffer_per_sample: HashMap<&str, String> = sample_keys
+        .iter()
+        .map(|k| (*k, String::new()))
+        .collect();
 
     // read all files into buffer
-    for path_to_fragment_file in path_to_fragment_files.iter() {
+    for (path_to_fragment_file, mut buffer) in &mut buffer_per_sample {
         log(&format!("Reading file {}", path_to_fragment_file), verbose);
         read_fragments_file(path_to_fragment_file, &mut buffer);
     }
 
-    // split buffer and remove empty lines
-    let mut fragments: Vec<Fragment> = buffer
-        .split('\n')
-        .filter(|s| !s.is_empty())
-        .map(Fragment::new_from_string)
+    // initialize queue of fragments per sample
+    let mut fragments_per_sample: HashMap<&str, VecDeque<Fragment>> = buffer_per_sample
+        .iter()
+        .map(
+            |(sample, buffer)|
+            (
+                *sample, 
+                buffer
+                    .split('\n')
+                    .filter(|s| !s.is_empty())
+                    .map(Fragment::new_from_string)
+                    .collect()
+            )
+        )
         .collect();
 
-    // sort fragments
-    log("Sorting fragments", verbose);
-    fragments.sort();
+    loop {
+        let mut min_sample: Option<&str> = None;
+        let mut min_fragment: Option<&Fragment> = None;
 
-    // write fragments
-    log("Writing fragments", verbose);
-    for fragment in fragments {
-        writer.write_all(fragment.to_string().as_bytes()).unwrap();
-        writer.write_all(b"\n").unwrap();
+        for (&sample, queue) in fragments_per_sample.iter() {
+            if let Some(fragment) = queue.front() {
+                let is_smaller = match min_fragment {
+                    Some(current_min) => fragment < current_min,
+                    None => true,
+                };
+                if is_smaller {
+                    min_fragment = Some(fragment);
+                    min_sample = Some(sample);
+                }
+            }
+        }
+
+        let sample = match min_sample {
+            Some(s) => s,
+            None => break, // we are done
+        };
+
+        if let Some(queue) = fragments_per_sample.get_mut(sample) {
+            if let Some(fragment) = queue.pop_front() {
+                writer.write_all(fragment.to_string().as_bytes())
+                    .expect(&format!("Could not write fragment, {}", fragment.to_string()));
+                writer.write_all(b"\n")
+                    .expect(&format!("Could not write fragment, {}", fragment.to_string()));
+            }
+        }
     }
     writer.flush().unwrap();
 }
