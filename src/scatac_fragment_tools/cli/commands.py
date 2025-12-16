@@ -26,7 +26,7 @@ def command_fragment_to_bigwigs(args):
 
     if args.chrom_prefix:
         fragments_df = fragments_df.with_columns(
-            (pl.lit(f"{args.chrom_prefix}_") + pl.col("Chromosome").cast(pl.Utf8))
+            (pl.lit(f"{args.chrom_prefix}") + pl.col("Chromosome").cast(pl.Utf8))
             .cast(pl.Categorical)
             .alias("Chromosome")
         )

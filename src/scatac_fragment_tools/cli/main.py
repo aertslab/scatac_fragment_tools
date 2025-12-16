@@ -143,8 +143,9 @@ def add_fragments_to_bigwig_subparser(
     parser.add_optional_argument(
         "--chrom-prefix",
         dest="chrom_prefix",
-        action="store_true",
-        default=False,
+        action="store",
+        type=str,
+        default=None,
         help="Add chromosome prefix to each chromosome name found in the fragments file.",
     )
     parser.add_optional_argument(
