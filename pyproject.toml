@@ -16,7 +16,6 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
   "numpy<2",
-  "pyBigWig",
   "pybigtools>=0.2.0",
   "polars>=1.0.0",
   "pyarrow",
@@ -32,6 +31,7 @@ repository = "https://github.com/aertslab/scatac_fragment_tools/"
 changelog = "https://raw.githubusercontent.com/aertslab/scatac_fragment_tools/CHANGELOG.md"
 
 [project.optional-dependencies]
+pybigwig = ["pyBigWig"]
 development = [
   "mypy",
   "ruff",

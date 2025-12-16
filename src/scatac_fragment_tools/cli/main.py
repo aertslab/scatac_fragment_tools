@@ -137,7 +137,7 @@ def add_fragments_to_bigwig_subparser(
         action="store",
         type=str.lower,
         choices=["pybigtools", "pybigwig"],
-        default="pybigwig",
+        default="pybigtools",
         help="Which bigWig writer implementation to use.",
     )
     parser.add_optional_argument(
