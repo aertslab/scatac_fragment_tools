@@ -6,6 +6,7 @@ use rust_htslib::tpool::ThreadPool;
 use std::fs::File;
 use std::collections::BinaryHeap;
 use std::cmp::Reverse;
+use std::io::Write;
 
 /// Aggregates multiple fragment files into a single file
 /// This code is just a fancy implementation of the unix command `cat | sort -k1,1 -k2,2n -k3,3n | bgzip`
@@ -13,20 +14,6 @@ use std::cmp::Reverse;
 ///
 /// It would be better to make an implementation that makes use of the bgzip blocks and the fact that the files are already sorted
 /// If someone wants and knows how to do that, please do!
-use std::io::{Read as IoRead, Write};
-
-fn read_fragments_file(file_name: &str, buffer: &mut String) {
-    let f = File::open(file_name).unwrap_or_else(|_| panic!("Could not open file {}", file_name));
-    let mut reader = BGZFReader::new(f)
-        .unwrap_or_else(|_| panic!("Could not create BGZF reader for file {}", file_name));
-    // Try to read file into buffer
-    match reader.read_to_string(buffer) {
-        Ok(_) => (),
-        Err(_) => {
-            println!("Could not read file {}, is it empty?", file_name);
-        }
-    };
-}
 
 /// Struct representing a fragment, used for sorting
 ///
@@ -218,10 +205,4 @@ pub fn merge_fragment_files(
     }
     writer.flush().unwrap();
     
-}
-
-fn log(message: &str, verbose: bool) {
-    if verbose {
-        println!("{}", message);
-    }
 }

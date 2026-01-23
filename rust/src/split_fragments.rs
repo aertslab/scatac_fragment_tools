@@ -3,7 +3,6 @@ use rust_htslib::bgzf::Writer;
 use rust_htslib::tbx::{self, Read as TbxRead};
 use rust_htslib::tpool::ThreadPool;
 use std::collections::HashMap;
-use std::default;
 /// Splits a tabix-index fragment file into multiple files based on cell type.
 use std::io::Write;
 
@@ -36,7 +35,7 @@ impl LazyBgzfWriter<'_> {
     /// * `path` - The path to the file.
     /// * `tpool` - The thread pool to use for writing.
 
-    fn new(path: String, tpool: &ThreadPool) -> LazyBgzfWriter {
+    fn new(path: String, tpool: &ThreadPool) -> LazyBgzfWriter<'_> {
         LazyBgzfWriter {
             writer: None,
             path,
