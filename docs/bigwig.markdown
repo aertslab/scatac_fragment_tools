@@ -55,5 +55,10 @@ Use 1 bp Tn5 cut sites (start and end of each fragment) instead of whole fragmen
 
 **--chrom-prefix**
 {: .py-0 .text-blue-300}
-Add chromosome prefix to each chromosome name found in the fragments file. Default: False
+Add chromosome prefix to each chromosome name found in the fragments file. Default: None
+{: .px-6 .py-0}
+
+**-v, --verbose**
+{: .py-0 .text-blue-300}
+Whether to print progress. Default: False
 {: .px-6 .py-0}

@@ -15,7 +15,7 @@ Split fragment files by cell type.
 
 {% highlight bash %}
 
-catac_fragment_tools split \
+scatac_fragment_tools split \
     -f <PATH_TO_SAMPLE_TO_FRAGMENT_DEFINITION> \
     -b <PATH_TO_CELL_TYPE_TO_CELL_BARCODE_DEFINITION> \
     -c <CHROM_SIZES_FILENAME> \
@@ -75,22 +75,27 @@ Separator for text files. Default: '\t'
 
 **--sample_column**
 {: .py-0 .text-blue-300}
-Column name for the sample name Default: sample
+Column name for the sample name. Default: sample
 {: .px-6 .py-0}
 
 **--fragment_column**
 {: .py-0 .text-blue-300}
-Column name for the path to the fragment file Default: path_to_fragment_file
+Column name for the path to the fragment file. Default: path_to_fragment_file
 {: .px-6 .py-0}
 
 **--cell_type_column**
 {: .py-0 .text-blue-300}
-Column name for the cell type Default: cell_type
+Column name for the cell type. Default: cell_type
 {: .px-6 .py-0}
 
 **--cell_barcode_column**
 {: .py-0 .text-blue-300}
-Column name for the cell barcode Default: cell_barcode
+Column name for the cell barcode. Default: cell_barcode
+{: .px-6 .py-0}
+
+**--add_sample_id**
+{: .py-0 .text-blue-300}
+Prefix sample id to cell barcode in pseudobulk fragment file. Default: False
 {: .px-6 .py-0}
 
 ## Examples of input files
