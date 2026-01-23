@@ -68,8 +68,8 @@ fn sanitize_string_for_filename(s: String) -> String {
 }
 
 fn read_to_array(read_bytes: &[u8], a: &mut [String; 5]) {
-    let read_as_str = String::from_utf8(read_bytes.to_vec())
-                        .expect("Invalid UTF-8 sequence when parsing line");
+    let read_as_str =
+        String::from_utf8(read_bytes.to_vec()).expect("Invalid UTF-8 sequence when parsing line");
     for (i, s) in read_as_str.split("\t").enumerate() {
         if i == 5 {
             // Skip (optional) strand column.
@@ -100,7 +100,7 @@ pub fn split_fragments_by_cell_barcode(
     chromsizes: HashMap<String, u64>,
     number_of_threads: u32,
     verbose: bool,
-    cb_prefix: String
+    cb_prefix: String,
 ) {
     // Initialize reader
     let mut tbx_reader = tbx::Reader::from_path(path_to_fragments)
@@ -172,12 +172,14 @@ pub fn split_fragments_by_cell_barcode(
                 read_a[3].insert_str(0, &cb_prefix);
                 for cell_type in cell_types {
                     let writer = cell_type_to_writer.get_mut(cell_type).unwrap();
-                    writer.write_all(&read_a.join("\t").as_bytes()).unwrap_or_else(|_| {
-                        panic!(
-                            "Could not write contig \"{}\" to \"{}\" fragments file",
-                            contig, &writer.path
-                        )
-                    });
+                    writer
+                        .write_all(&read_a.join("\t").as_bytes())
+                        .unwrap_or_else(|_| {
+                            panic!(
+                                "Could not write contig \"{}\" to \"{}\" fragments file",
+                                contig, &writer.path
+                            )
+                        });
                     writer.write_all(b"\n").unwrap_or_else(|_| {
                         panic!(
                             "Could not write contig \"{}\" to \"{}\" fragments file",

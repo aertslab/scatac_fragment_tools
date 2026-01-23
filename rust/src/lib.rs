@@ -43,7 +43,7 @@ fn split_fragments_by_cell_barcode(
     cell_type_to_cell_barcodes: HashMap<String, Vec<String>>,
     chromsizes: HashMap<String, u64>,
     verbose: bool,
-    cb_prefix: String
+    cb_prefix: String,
 ) -> PyResult<()> {
     // Invert cell_type_to_cell_barcodes
     let mut cell_barcode_to_cell_type: HashMap<String, Vec<String>> = HashMap::new();
@@ -62,7 +62,7 @@ fn split_fragments_by_cell_barcode(
         chromsizes,
         5,
         verbose,
-        cb_prefix
+        cb_prefix,
     );
     Ok(())
 }

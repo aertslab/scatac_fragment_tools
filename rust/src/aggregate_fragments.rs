@@ -1,11 +1,11 @@
 use bgzip::BGZFReader;
 use core::fmt;
-use std::io::BufRead;
 use rust_htslib::bgzf::Writer;
 use rust_htslib::tpool::ThreadPool;
-use std::fs::File;
-use std::collections::BinaryHeap;
 use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+use std::fs::File;
+use std::io::BufRead;
 use std::io::Write;
 
 /// Aggregates multiple fragment files into a single file
@@ -158,8 +158,7 @@ pub fn merge_fragment_files(
     let mut readers: Vec<(String, BGZFReader<File>)> = path_to_fragment_files
         .iter()
         .map(|path| {
-            let f = File::open(path)
-                .unwrap_or_else(|_| panic!("Could not open file {}", path));
+            let f = File::open(path).unwrap_or_else(|_| panic!("Could not open file {}", path));
             let reader = BGZFReader::new(f)
                 .unwrap_or_else(|_| panic!("Could not create BGZF reader for file {}", path));
             (path.clone(), reader)
@@ -190,7 +189,9 @@ pub fn merge_fragment_files(
         };
 
         // Write the smallest fragment
-        writer.write_all(min_fragment.to_string().as_bytes()).unwrap();
+        writer
+            .write_all(min_fragment.to_string().as_bytes())
+            .unwrap();
         writer.write_all(b"\n").unwrap();
 
         // Read the next fragment from the file that `min_fragment` came from
@@ -204,5 +205,4 @@ pub fn merge_fragment_files(
         }
     }
     writer.flush().unwrap();
-    
 }
