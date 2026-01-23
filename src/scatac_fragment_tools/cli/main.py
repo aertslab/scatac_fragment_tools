@@ -248,7 +248,7 @@ def add_split_fragments_by_cell_type_subparser(
         action="store",
         type=str,
         default="sample",
-        help="Column name for the sample name",
+        help="Column name for the sample name.",
     )
     parser.add_optional_argument(
         "--fragment_column",
@@ -256,7 +256,7 @@ def add_split_fragments_by_cell_type_subparser(
         action="store",
         type=str,
         default="path_to_fragment_file",
-        help="Column name for the path to the fragment file",
+        help="Column name for the path to the fragment file.",
     )
     parser.add_optional_argument(
         "--cell_type_column",
@@ -264,7 +264,7 @@ def add_split_fragments_by_cell_type_subparser(
         action="store",
         type=str,
         default="cell_type",
-        help="Column name for the cell type",
+        help="Column name for the cell type.",
     )
     parser.add_optional_argument(
         "--cell_barcode_column",
@@ -272,14 +272,14 @@ def add_split_fragments_by_cell_type_subparser(
         action="store",
         type=str,
         default="cell_barcode",
-        help="Column name for the cell barcode",
+        help="Column name for the cell barcode.",
     )
     parser.add_optional_argument(
         "--add_sample_id",
         dest="add_sample_id",
         action="store_true",
         default=False,
-        help="Prefix sample id to cell barcode in pseudobulk fragment file"
+        help="Prefix sample id to cell barcode in pseudobulk fragment file."
     )
     return parser.get_parser()
 
