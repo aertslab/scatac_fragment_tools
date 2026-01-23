@@ -72,8 +72,9 @@ fn read_to_array(read_bytes: &[u8], a: &mut [String; 5]) {
     let read_as_str = String::from_utf8(read_bytes.to_vec())
                         .expect("Invalid UTF-8 sequence when parsing line");
     for (i, s) in read_as_str.split("\t").enumerate() {
-        if i > (a.len() - 1) {
-            panic!("Fragment contains more than 5 columns: {}", read_as_str);
+        if i == 5 {
+            // Skip (optional) strand column.
+            break;
         }
         a[i] = s.to_string();
     }
