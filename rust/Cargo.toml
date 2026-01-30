@@ -14,7 +14,9 @@ bgzip = { git = "https://github.com/informationsea/bgzip-rs/", rev = "4492b5d6ab
 itertools = "0.14.0"
 pyo3 = { version = "0.27.2", features = ["abi3-py310", "extension-module"] }
 
-[target.'cfg(not(all(target_os = "linux", target_arch = "powerpc64")))'.dependencies]
-rust-htslib = { version = "1.0.0", default-features = false, features = ["libdeflate"] }
-[target.'cfg(all(target_os = "linux", target_arch = "powerpc64"))'.dependencies]
+# Disable libdeflate support till zig fixes the issue with Xclang -target-feature -Xclang -evex512
+#   https://github.com/ebiggers/libdeflate/issues/394#issuecomment-2430956794
+#[target.'cfg(not(all(target_os = "linux", target_arch = "powerpc64")))'.dependencies]
+#rust-htslib = { version = "1.0.0", default-features = false, features = ["libdeflate"] }
+#[target.'cfg(all(target_os = "linux", target_arch = "powerpc64"))'.dependencies]
 rust-htslib = { version = "1.0.0", default-features = false }
