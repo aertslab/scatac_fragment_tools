@@ -13,7 +13,7 @@ Tools for manipulating scATAC-seq fragment files.
 ## Installation
 
 {: .note}
-> Requires python version **>=3.8**.
+> Requires python version **>=3.10**.
 
 ### From pypi:
 
@@ -21,9 +21,8 @@ Tools for manipulating scATAC-seq fragment files.
 # Install scatac-fragment-tools.
 pip install scatac-fragment-tools
 
-# Install scatac-fragment-tools with "pyBigWig" support (replacement for "pybigtools").
-# ("pyBigWig" is slower than "pybigtools", so "pyBigWig" is only recommended if you
-# would experience issues with bigWig file creation with "pybigtools".)
+# To use "scatac_fragment_tools bigwig", you need to install "pybigtools" (fastest) or "pybigwig".
+pip install scatac-fragment-tools[pybigtools]
 pip install scatac-fragment-tools[pybigwig]
 
 {% endhighlight %}
