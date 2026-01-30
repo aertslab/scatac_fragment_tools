@@ -6,6 +6,7 @@ build-backend = "maturin"
 name = "scatac_fragment_tools"
 description = "Tools for working with scATAC-seq fragment files."
 readme = "README.md"
+license = { file = "LICENSE" }
 keywords = ["scATAC-seq", "scATAC", "fragment files"]
 requires-python = ">=3.10"
 classifiers = [
