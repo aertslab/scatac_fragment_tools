@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.5
+
+### Fixed
+- **[6e3dbb9](https://github.com/aertslab/scatac_fragment_tools/commit/6e3dbb93ff9a459e8c920fae45f865d0c875148e)** Support reading CellRanger-ATAC 2.2.x and CellRanger-ARC 2.1.x fragment files.
+- **[529a1c0](https://github.com/aertslab/scatac_fragment_tools/commit/529a1c0d0ccf1a214f1a27127e450416ce05c2a6)** Fix "--chrom_prefix" option of `scatac_fragment_tools bigwig`.
+
 ## v0.1.4
 
 ### Updated
