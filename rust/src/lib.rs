@@ -20,19 +20,20 @@ use std::collections::HashMap;
 /// # Example
 ///
 /// ```python
-/// from scatac_fragment_tools import _rust_scatac_fragment_tools
-/// rust_scatac_fragment_tools.split_fragments_by_cell_barcode(
+/// import scatac_fragment_tools
+/// scatac_fragment_tools._rust_scatac_fragment_tools.split_fragments_by_cell_barcode(
 ///     path_to_fragments="fragments.tsv.gz",
 ///     path_to_output_folder="fragments_by_cell_type",
 ///     cell_type_to_cell_barcodes={
 ///         "cell_type_1": ["AACATCGATGGATG-1", "AACATCGATGGTTG-1"],
-///         "cell_type_2": ["TTGATCGATGGATG-1", "AACATCGCTAGATG-1"]
+///         "cell_type_2": ["TTGATCGATGGATG-1", "AACATCGCTAGATG-1"],
 ///     },
 ///     chromsizes={
 ///         "chr1": 248956422,
-///         "chr2": 242193529
+///         "chr2": 242193529,
 ///     },
-///     verbose=True
+///     verbose=True,
+///     cb_prefix="",
 /// )
 /// ```
 
