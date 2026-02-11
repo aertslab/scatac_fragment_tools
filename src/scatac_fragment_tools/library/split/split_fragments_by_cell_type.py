@@ -94,6 +94,7 @@ def split_fragment_files_by_cell_type(
     # Check whether all files were create successfully and
     # create a dictionary mapping cell types to fragment files.
     cell_type_to_fragment_files: dict[str, list[str]] = {}
+    no_cell_type_fragment_file_list = []
     for sample in sample_to_cell_type_to_cell_barcodes:
         for cell_type in sample_to_cell_type_to_cell_barcodes[sample]:
             cell_type_sanitized = _santize_string_for_filename(cell_type)
@@ -101,14 +102,23 @@ def split_fragment_files_by_cell_type(
                 path_to_temp_folder, sample, f"{cell_type_sanitized}.fragments.tsv.gz"
             )
             if not os.path.exists(path_to_fragment_file):
-                raise ValueError(
-                    f"Fragment file {path_to_fragment_file} does not exist."
+                no_cell_type_fragment_file_list.append(
+                    f'Fragment file "{path_to_fragment_file}" does not exist.\n'
+                    f'  Check if specified cell barcodes for "{cell_type_sanitized}" in "{sample}" '
+                    f"match with those used\n"
+                    f'  in "{sample_to_fragment_file[sample]}".'
                 )
             if cell_type_sanitized not in cell_type_to_fragment_files:
                 cell_type_to_fragment_files[cell_type_sanitized] = []
             cell_type_to_fragment_files[cell_type_sanitized].append(
                 path_to_fragment_file
             )
+
+    if len(no_cell_type_fragment_file_list) > 0:
+        raise ValueError(
+            "Some fragment files were not created successfully:\n"
+            + "\n".join(no_cell_type_fragment_file_list)
+        )
 
     # Merge fragment files by cell type, in parallel.
     if verbose:
