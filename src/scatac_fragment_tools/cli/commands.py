@@ -193,5 +193,5 @@ def command_split_fragments_by_cell_type(args):
         n_cpu=args.n_cpu,
         verbose=args.verbose,
         clear_temp_folder=args.clear_temp_folder,
-        add_sample_id=args.add_sample_id
+        add_sample_id=args.add_sample_id,
     )

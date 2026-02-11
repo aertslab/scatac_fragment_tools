@@ -22,7 +22,7 @@ def split_fragment_files_by_cell_type(
     n_cpu: int = 1,
     verbose: bool = False,
     clear_temp_folder: bool = False,
-    add_sample_id: bool = False
+    add_sample_id: bool = False,
 ):
     """
     Split fragment files by cell type.
@@ -42,7 +42,7 @@ def split_fragment_files_by_cell_type(
     chromsizes : Dict[str, int]
         Dictionary mapping chromosome names to chromosome sizes.
     n_cpu : int, optional
-        Number of corse to use. The default is 1.
+        Number of cores to use. The default is 1.
     verbose : bool, optional
         Whether to print progress. The default is False.
     clear_temp_folder : bool, optional
@@ -86,7 +86,7 @@ def split_fragment_files_by_cell_type(
             cell_type_to_cell_barcodes=sample_to_cell_type_to_cell_barcodes[sample],
             chromsizes=chromsizes,
             verbose=verbose,
-            cb_prefix=f"{sample}_" if add_sample_id else ""
+            cb_prefix=f"{sample}_" if add_sample_id else "",
         )
         for sample in sample_to_cell_type_to_cell_barcodes
     )

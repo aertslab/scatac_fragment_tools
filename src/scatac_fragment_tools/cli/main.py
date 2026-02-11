@@ -279,7 +279,7 @@ def add_split_fragments_by_cell_type_subparser(
         dest="add_sample_id",
         action="store_true",
         default=False,
-        help="Prefix sample id to cell barcode in pseudobulk fragment file."
+        help="Prefix sample id to cell barcode in pseudobulk fragment file.",
     )
     return parser.get_parser()
 
