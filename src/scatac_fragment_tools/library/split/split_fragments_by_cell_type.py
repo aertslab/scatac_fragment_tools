@@ -101,8 +101,9 @@ def split_fragment_files_by_cell_type(
                 path_to_temp_folder, sample, f"{cell_type_sanitized}.fragments.tsv.gz"
             )
             if not os.path.exists(path_to_fragment_file):
-                raise ValueError(
-                    f"Fragment file {path_to_fragment_file} does not exist."
+                Warning(
+                    f"Warning: Fragment file {path_to_fragment_file} does not exist. "
+                    f"Possibly no fragments for {cell_type_sanitized} in {sample}."
                 )
             if cell_type_sanitized not in cell_type_to_fragment_files:
                 cell_type_to_fragment_files[cell_type_sanitized] = []
